@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     #apps propias
     'apps.usuarios',
     'apps.post',
+    'apps.comments',
 ]
 
 MIDDLEWARE = [
