@@ -1,0 +1,872 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load posts_extras %}
+{% load user_tags %}
+
+{% block titulo %}{{ post.titulo }} - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'index' %}" class="text-decoration-none">
+                    <i class="bi bi-house-door"></i> Inicio
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'posts:listar_posts' %}" class="text-decoration-none">Viajes</a>
+            </li>
+            {% if post.categoria %}
+            <li class="breadcrumb-item">
+                <a href="{% url 'posts:listar_por_categoria' post.categoria.nombre %}" class="text-decoration-none">
+                    {{ post.categoria.nombre }}
+                </a>
+            </li>
+            {% endif %}
+            <li class="breadcrumb-item active">{{ post.titulo|truncatechars:30 }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Header del post -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <!-- Estado y visibilidad -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                {% if post.estado == 'borrador' %}
+                <span class="badge bg-secondary">
+                    <i class="bi bi-eye-slash me-1"></i>Borrador
+                </span>
+                {% elif post.estado == 'revision' %}
+                <span class="badge bg-info">
+                    <i class="bi bi-clock me-1"></i>En revisión
+                </span>
+                {% elif post.estado == 'publicado' %}
+                <span class="badge bg-success">
+                    <i class="bi bi-check-circle me-1"></i>Publicado
+                </span>
+                {% endif %}
+                
+                {% if post.visibilidad == 'privado' %}
+                <span class="badge bg-dark">
+                    <i class="bi bi-lock me-1"></i>Privado
+                </span>
+                {% elif post.visibilidad == 'solo_colaboradores' %}
+                <span class="badge bg-warning text-dark">
+                    <i class="bi bi-people me-1"></i>Solo colaboradores
+                </span>
+                {% endif %}
+                
+                {% if post.categoria %}
+                <span class="badge" style="background-color: #6f42c1;">
+                    <i class="bi bi-tag me-1"></i>{{ post.categoria.nombre }}
+                </span>
+                {% endif %}
+            </div>
+            
+            <!-- Título principal -->
+            <h1 class="display-5 fw-bold mb-3">{{ post.titulo }}</h1>
+            
+            <!-- Descripción corta -->
+            {% if post.resumen %}
+            <div class="lead mb-4 p-3 bg-light rounded">
+                <i class="bi bi-quote me-2 text-warning"></i>{{ post.resumen }}
+            </div>
+            {% endif %}
+            
+            <!-- Información del autor -->
+            <div class="d-flex align-items-center mb-4">
+                <div class="me-3">
+                    {% if post.autor.perfil and post.autor.perfil.imagen %}
+                    <img src="{{ post.autor.perfil.imagen.url }}" 
+                         alt="{{ post.autor.username }}"
+                         class="rounded-circle border border-2 border-warning"
+                         width="60" height="60"
+                         style="object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center border border-2 border-warning"
+                         style="width: 60px; height: 60px;">
+                        <i class="bi bi-person text-white fs-4"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="d-flex align-items-center flex-wrap">
+                        <span class="fw-bold me-2">{{ post.autor.get_full_name|default:post.autor.username }}</span>
+                        {% if post.autor.colaborador %}
+                        <span class="badge bg-info me-2">Colaborador</span>
+                        {% endif %}
+                        {% if post.autor.is_staff %}
+                        <span class="badge bg-warning text-dark">Editor</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-muted">
+                        <i class="bi bi-calendar me-1"></i>
+                        {% if post.estado == 'publicado' and post.fecha_publicacion %}
+                            Publicado el {{ post.fecha_publicacion|date:"d/m/Y H:i" }}
+                        {% else %}
+                            Creado el {{ post.fecha_creacion|date:"d/m/Y H:i" }}
+                        {% endif %}
+                        {% if post.fecha_actualizacion != post.fecha_creacion %}
+                            · Actualizado el {{ post.fecha_actualizacion|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Acciones rápidas -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">
+                        <i class="bi bi-lightning-charge me-2"></i>Acciones Rápidas
+                    </h5>
+                    
+                    <div class="d-grid gap-2 mb-3">
+                        {% if user == post.autor or user.is_staff or user.is_superuser %}
+                        <a href="{% url 'posts:actualizar_post' post.id %}" class="btn btn-warning">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Publicación
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-warning">
+                            <i class="bi bi-compass me-2"></i>Explorar más viajes
+                        </a>
+                        
+                        {% if post.categoria %}
+                        <a href="{% url 'posts:listar_por_categoria' post.categoria.nombre %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-tag me-2"></i>Ver más en {{ post.categoria.nombre }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Compartir -->
+                    <div class="border-top pt-3">
+                        <h6 class="fw-bold mb-2">Compartir:</h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-facebook"></i>
+                            </button>
+                            <button class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-twitter"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-pinterest"></i>
+                            </button>
+                            <button class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-whatsapp"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Imagen principal -->
+    {% if post.imagen %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="position-relative">
+                <img src="{{ post.imagen.url }}" 
+                     alt="{{ post.titulo }}" 
+                     class="img-fluid rounded shadow-lg w-100"
+                     style="max-height: 500px; object-fit: cover;">
+                <div class="position-absolute bottom-0 end-0 m-3">
+                    <span class="badge bg-dark bg-opacity-75">
+                        <i class="bi bi-image me-1"></i>Foto del viaje
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <!-- Contenido principal -->
+        <div class="col-lg-8">
+            <!-- Información práctica del viaje -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-info-circle me-2"></i>Información del Viaje
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Ubicación -->
+                        {% if post.ubicacion_pais %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                                    <i class="bi bi-geo-alt text-warning fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Ubicación</h6>
+                                    <p class="mb-0">
+                                        {{ post.ubicacion_pais }}
+                                        {% if post.ubicacion_ciudad %}
+                                        <br><small class="text-muted">{{ post.ubicacion_ciudad }}</small>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Mejor época -->
+                        {% if post.mejor_epoca %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                                    <i class="bi bi-sun text-warning fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Mejor época</h6>
+                                    <p class="mb-0">{{ post.mejor_epoca }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Precio aproximado -->
+                        {% if post.precio_aproximado %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                                    <i class="bi bi-cash-coin text-warning fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Precio aproximado</h6>
+                                    <p class="mb-0">{{ post.precio_aproximado }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Dificultad -->
+                        {% if post.dificultad %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                                    <i class="bi bi-speedometer2 text-warning fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Dificultad</h6>
+                                    <p class="mb-0">
+                                        {% if post.dificultad == 'facil' %}
+                                        <span class="badge bg-success">Fácil</span>
+                                        {% elif post.dificultad == 'moderado' %}
+                                        <span class="badge bg-warning text-dark">Moderado</span>
+                                        {% elif post.dificultad == 'dificil' %}
+                                        <span class="badge bg-danger">Difícil</span>
+                                        {% elif post.dificultad == 'muy_dificil' %}
+                                        <span class="badge bg-dark">Muy difícil</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Duración recomendada -->
+                        {% if post.duracia_recomendada %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                                    <i class="bi bi-clock text-warning fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Duración recomendada</h6>
+                                    <p class="mb-0">{{ post.duracia_recomendada }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Palabras clave -->
+                        {% if post.palabras_clave %}
+                        <div class="col-12 mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                                    <i class="bi bi-tags text-warning fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Etiquetas</h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for palabra in post.palabras_clave.split %}
+                                        <span class="badge bg-secondary">{{ palabra }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contenido completo -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-journal-text me-2"></i>Relato del Viaje
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="post-contenido">
+                        {{ post.contenido|linebreaks }}
+                    </div>
+                    
+                    <!-- Secciones sugeridas (si el autor no las incluyó) -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="fw-bold mb-2">
+                            <i class="bi bi-lightbulb me-2"></i>Secciones que podrías incluir:
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-map text-warning me-2"></i>
+                                    <small>Itinerario detallado</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-bus-front text-warning me-2"></i>
+                                    <small>Transporte utilizado</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-house text-warning me-2"></i>
+                                    <small>Alojamiento recomendado</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-egg-fried text-warning me-2"></i>
+                                    <small>Gastronomía local</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-cash-stack text-warning me-2"></i>
+                                    <small>Presupuesto detallado</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                                    <small>Consejos y precauciones</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="row text-center mb-4">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body py-3">
+                            <h3 class="text-primary mb-1">{{ post.vistas|default:"0" }}</h3>
+                            <p class="text-muted small mb-0">Vistas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body py-3">
+                            <h3 class="text-success mb-1">{{ post.comentarios.count|default:"0" }}</h3>
+                            <p class="text-muted small mb-0">Comentarios</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body py-3">
+                            <h3 class="text-warning mb-1">0</h3>
+                            <p class="text-muted small mb-0">Favoritos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body py-3">
+                            <h3 class="text-info mb-1">0</h3>
+                            <p class="text-muted small mb-0">Compartido</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="sticky-sidebar">
+                <!-- Información del autor -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-person-circle me-2"></i>Sobre el Autor
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <!-- Avatar -->
+                        {% if post.autor.perfil and post.autor.perfil.imagen %}
+                        <img src="{{ post.autor.perfil.imagen.url }}" 
+                             alt="{{ post.autor.username }}"
+                             class="rounded-circle border border-3 border-warning mb-3"
+                             width="100" height="100"
+                             style="object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3 border border-3 border-warning"
+                             style="width: 100px; height: 100px;">
+                            <i class="bi bi-person text-white fs-2"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Nombre y rol -->
+                        <h6 class="fw-bold mb-1">{{ post.autor.get_full_name|default:post.autor.username }}</h6>
+                        <p class="text-muted small mb-3">@{{ post.autor.username }}</p>
+                        
+                        <!-- Estadísticas del autor -->
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h5 class="fw-bold text-primary">{{ post.autor.post_set.count }}</h5>
+                                <p class="small text-muted mb-0">Viajes</p>
+                            </div>
+                            <div class="col-6">
+                                <h5 class="fw-bold text-success">0</h5>
+                                <p class="small text-muted mb-0">Seguidores</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Botón ver perfil -->
+                        <a href="{% url 'usuarios:perfil' %}" class="btn btn-outline-warning btn-sm mt-3 w-100">
+                            <i class="bi bi-person-lines-fill me-1"></i>Ver perfil
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- VIAJES RELACIONADOS MEJORADO -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                <i class="bi bi-compass me-2"></i>Viajes Relacionados
+            </h5>
+            <small class="text-muted" data-bs-toggle="tooltip" 
+                    title="Basado en categoría, ubicación, dificultad y más">
+                <i class="bi bi-info-circle"></i>
+            </small>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if related_posts %}
+            {% for related in related_posts %}
+            <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                <div class="d-flex">
+                    <!-- Imagen pequeña -->
+                    <div class="me-3 flex-shrink-0">
+                        {% if related.imagen %}
+                        <img src="{{ related.imagen.url }}" 
+                             alt="{{ related.titulo }}"
+                             class="rounded"
+                             width="60" height="60"
+                             style="object-fit: cover;">
+                        {% else %}
+                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-camera text-white"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Información -->
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-1">
+                            <a href="{% url 'posts:detalle_post' related.id %}" 
+                               class="text-decoration-none text-dark hover-text-warning">
+                                {{ related.titulo|truncatechars:40 }}
+                            </a>
+                        </h6>
+                        
+                        <!-- Indicadores de similitud -->
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            {% if related.categoria and post.categoria and related.categoria == post.categoria %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                <i class="bi bi-tag me-1"></i>Misma categoría
+                            </span>
+                            {% endif %}
+                            
+                            {% if related.ubicacion_pais and post.ubicacion_pais and related.ubicacion_pais|lower == post.ubicacion_pais|lower %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                <i class="bi bi-geo-alt me-1"></i>Mismo país
+                            </span>
+                            {% endif %}
+                            
+                            {% if related.dificultad and post.dificultad and related.dificultad == post.dificultad %}
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">
+                                <i class="bi bi-speedometer2 me-1"></i>Misma dificultad
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Detalles adicionales -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted small">
+                                {% if related.ubicacion_pais %}
+                                <span class="me-2">
+                                    <i class="bi bi-geo-alt"></i> {{ related.ubicacion_pais }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if related.precio_aproximado %}
+                                <span>
+                                    <i class="bi bi-cash-coin"></i> {{ related.precio_aproximado }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <a href="{% url 'posts:detalle_post' related.id %}" 
+                               class="btn btn-sm btn-outline-warning py-0 px-2">
+                                Ver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Botón para ver más relacionados -->
+            <div class="text-center mt-3">
+                <a href="{% url 'posts:listar_posts' %}?categoria={{ post.categoria.nombre|default:'' }}" 
+                   class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-compass me-1"></i>Ver más viajes similares
+                </a>
+            </div>
+            
+        {% else %}
+            <!-- Mensaje cuando no hay posts relacionados -->
+            <div class="text-center py-4">
+                <i class="bi bi-compass text-muted display-6 mb-3"></i>
+                <p class="text-muted mb-2">
+                    No encontramos viajes similares a este.
+                </p>
+                <p class="small text-muted mb-3">
+                    ¡Sé el primero en explorar este destino!
+                </p>
+                <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-eye me-1"></i>Explorar todos los viajes
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+                
+                <!-- Mapa (placeholder para futuro) -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-map me-2"></i>Ubicación
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                             style="height: 200px;">
+                            <div class="text-center">
+                                <i class="bi bi-geo-alt text-muted display-6 mb-2"></i>
+                                <p class="text-muted mb-0">
+                                    {% if post.ubicacion_pais %}
+                                    {{ post.ubicacion_pais }}
+                                    {% if post.ubicacion_ciudad %}
+                                    <br>{{ post.ubicacion_ciudad }}
+                                    {% endif %}
+                                    {% else %}
+                                    Ubicación no especificada
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-arrow-up-right-square me-1"></i>Abrir en Maps
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navegación entre posts -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% with prev_post=post.get_previous_by_fecha_creacion %}
+                            {% if prev_post %}
+                            <a href="{% url 'post:detalle_post' prev_post.id %}" class="text-decoration-none">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="bi bi-chevron-left fs-4 text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Anterior</small>
+                                        <h6 class="fw-bold mb-0 text-dark">{{ prev_post.titulo|truncatechars:40 }}</h6>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        
+                        <div class="col-md-6 text-md-end">
+                            {% with next_post=post.get_next_by_fecha_creacion %}
+                            {% if next_post %}
+                            <a href="{% url 'post:detalle_post' next_post.id %}" class="text-decoration-none">
+                                <div class="d-flex align-items-center justify-content-md-end">
+                                    <div class="text-end">
+                                        <small class="text-muted d-block">Siguiente</small>
+                                        <h6 class="fw-bold mb-0 text-dark">{{ next_post.titulo|truncatechars:40 }}</h6>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="bi bi-chevron-right fs-4 text-warning"></i>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .post-contenido {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #333;
+    }
+    
+    .post-contenido h2, 
+    .post-contenido h3, 
+    .post-contenido h4 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .post-contenido h2 {
+        border-bottom: 2px solid #ffc107;
+        padding-bottom: 0.5rem;
+        font-size: 1.8rem;
+    }
+    
+    .post-contenido h3 {
+        font-size: 1.5rem;
+        color: #3498db;
+    }
+    
+    .post-contenido h4 {
+        font-size: 1.3rem;
+        color: #2ecc71;
+    }
+    
+    .post-contenido img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .post-contenido blockquote {
+        border-left: 4px solid #ffc107;
+        padding-left: 1.5rem;
+        font-style: italic;
+        color: #555;
+        margin: 1.5rem 0;
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .post-contenido ul, 
+    .post-contenido ol {
+        padding-left: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .post-contenido li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .post-contenido code {
+        background-color: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+    
+    .post-contenido pre {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+    }
+    
+    .sticky-sidebar {
+        position: sticky;
+        top: 90px;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+    
+    @media (max-width: 768px) {
+        .post-contenido {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .post-contenido h2 {
+            font-size: 1.5rem;
+        }
+        
+        .post-contenido h3 {
+            font-size: 1.3rem;
+        }
+        
+        .sticky-sidebar {
+            position: static;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Incrementar contador de vistas (podrías hacerlo con AJAX)
+    const postId = {{ post.id }};
+    
+    // Función para incrementar vistas (ejemplo básico)
+    function incrementarVistas() {
+        // En un caso real, harías una petición AJAX al servidor
+        console.log('Incrementando vistas para el post:', postId);
+        
+        // Ejemplo con fetch (descomenta cuando tengas la view)
+        /*
+        fetch(`/api/posts/${postId}/incrementar-vistas/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Vistas actualizadas:', data);
+        });
+        */
+    }
+    
+    // Función para obtener el token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Incrementar vistas después de 3 segundos (para no afectar la carga)
+    setTimeout(incrementarVistas, 3000);
+    
+    // Botones de compartir
+    const shareButtons = document.querySelectorAll('.btn-outline-primary, .btn-outline-info, .btn-outline-danger, .btn-outline-success');
+    
+    shareButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const platform = this.querySelector('i').className.split('bi-')[1];
+            const url = window.location.href;
+            const title = document.title;
+            
+            let shareUrl = '';
+            
+            switch(platform) {
+                case 'facebook':
+                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                    break;
+                case 'twitter':
+                    shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+                    break;
+                case 'pinterest':
+                    shareUrl = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(title)}`;
+                    break;
+                case 'whatsapp':
+                    shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
+                    break;
+            }
+            
+            if (shareUrl) {
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+        });
+    });
+    
+    // Efecto de scroll suave para anchors internos
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            const targetId = this.getAttribute('href');
+            if (targetId.startsWith('#')) {
+                e.preventDefault();
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Resaltar secciones al pasar el mouse
+    const sections = document.querySelectorAll('.card');
+    sections.forEach(section => {
+        section.addEventListener('mouseenter', function() {
+            this.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
+            this.style.transition = 'box-shadow 0.3s ease';
+        });
+        
+        section.addEventListener('mouseleave', function() {
+            this.style.boxShadow = '';
+        });
+    });
+});
+</script>
+{% include 'comments/_comentarios.html' %}
+
+{% endblock %}

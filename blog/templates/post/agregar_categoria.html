@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load posts_extras %}
+{% load user_tags %}
+
+{% block titulo %}Agregar Categoría - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-warning text-white py-3">
+                    <h3 class="mb-0 fw-bold">
+                        <i class="bi bi-tag-plus me-2"></i>Nueva Categoría
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Mensajes de error generales -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Nombre -->
+                        <div class="mb-4">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-card-heading me-2"></i>Nombre de la categoría
+                            </label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.nombre.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Ej: Aventura, Playa, Cultural, Gastronómico</div>
+                        </div>
+                        
+                        <!-- Descripción -->
+                        <div class="mb-4">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-text-paragraph me-2"></i>Descripción
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.descripcion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Imagen -->
+                        <div class="mb-4">
+                            <label for="{{ form.imagen.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-image me-2"></i>Imagen representativa
+                            </label>
+                            
+                            <!-- Vista previa de imagen -->
+                            <div class="mb-3 text-center" id="imagePreviewContainer" style="display: none;">
+                                <div class="border rounded p-3 bg-light">
+                                    <img id="imagePreview" src="#" 
+                                         alt="Vista previa" 
+                                         class="img-fluid rounded"
+                                         style="max-height: 200px;">
+                                    <p class="text-muted small mt-2">Vista previa</p>
+                                </div>
+                            </div>
+                            
+                            {{ form.imagen }}
+                            {% if form.imagen.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.imagen.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Formatos aceptados: JPG, PNG, GIF, WebP. Tamaño recomendado: 800x600px
+                            </div>
+                        </div>
+                        
+                        <!-- Icono y color en la misma fila -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.icono.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-emoji-smile me-2"></i>Icono (opcional)
+                                </label>
+                                {{ form.icono }}
+                                {% if form.icono.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.icono.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Ej: bi-globe, bi-mountain, bi-water
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.color.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-palette me-2"></i>Color
+                                </label>
+                                <div class="input-group">
+                                    {{ form.color }}
+                                    <span class="input-group-text">
+                                        <i class="bi bi-eyedropper"></i>
+                                    </span>
+                                </div>
+                                {% if form.color.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.color.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Color representativo</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancelar
+                            </a>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="reset" class="btn btn-outline-warning">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Limpiar
+                                </button>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-check-circle me-2"></i>Crear Categoría
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Información adicional -->
+                <div class="card-footer bg-light border-0 py-3">
+                    <div class="alert alert-info mb-0">
+                        <h6 class="fw-bold mb-2">
+                            <i class="bi bi-info-circle me-2"></i>¿Para qué sirven las categorías?
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li>Ayudan a los usuarios a encontrar viajes por temática</li>
+                            <li>Mejoran la organización del contenido</li>
+                            <li>Permiten filtros más específicos</li>
+                            <li>Pueden tener imágenes e iconos personalizados</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos -->
+<style>
+    .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+    
+    .card {
+        border-radius: 15px;
+    }
+    
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+    }
+    
+    input[type="color"] {
+        -webkit-appearance: none;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    
+    input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    
+    input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 5px;
+    }
+</style>
+
+<!-- Script para vista previa de imagen -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('{{ form.imagen.id_for_label }}');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewImage = document.getElementById('imagePreview');
+    
+    // Vista previa de imagen
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // Validación en tiempo real
+    const form = document.querySelector('form');
+    const nombreInput = document.getElementById('{{ form.nombre.id_for_label }}');
+    const imagenInput = document.getElementById('{{ form.imagen.id_for_label }}');
+    
+    // Validar nombre único (opcional, podrías hacerlo con AJAX)
+    if (nombreInput) {
+        nombreInput.addEventListener('blur', function() {
+            const nombre = this.value.trim();
+            
+            if (nombre.length < 3) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    }
+    
+    // Validar imagen
+    if (imagenInput) {
+        imagenInput.addEventListener('change', function() {
+            const file = this.files[0];
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            
+            if (file) {
+                // Validar tipo
+                if (!allowedTypes.includes(file.type)) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    alert('Formato de imagen no válido. Usa JPG, PNG, GIF o WebP.');
+                    this.value = '';
+                    previewContainer.style.display = 'none';
+                    return;
+                }
+                
+                // Validar tamaño
+                if (file.size > maxSize) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    alert('La imagen es demasiado grande. Máximo 5MB.');
+                    this.value = '';
+                    previewContainer.style.display = 'none';
+                    return;
+                }
+                
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    }
+    
+    // Validación del formulario al enviar
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Validar nombre
+            if (!nombreInput.value.trim()) {
+                nombreInput.classList.add('is-invalid');
+                isValid = false;
+            }
+            
+            // Si hay imagen, validar
+            if (imagenInput.files.length > 0) {
+                const file = imagenInput.files[0];
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                const maxSize = 5 * 1024 * 1024;
+                
+                if (!allowedTypes.includes(file.type) || file.size > maxSize) {
+                    imagenInput.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Por favor, corrige los errores en el formulario.');
+                return false;
+            }
+            
+            // Mostrar loading
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creando...';
+            submitBtn.disabled = true;
+            
+            // Restaurar después de 5 segundos (por si falla)
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 5000);
+        });
+    }
+    
+    // Previsualizar icono (opcional)
+    const iconoInput = document.getElementById('{{ form.icono.id_for_label }}');
+    if (iconoInput) {
+        iconoInput.addEventListener('input', function() {
+            const iconoValue = this.value.trim();
+            if (iconoValue && iconoValue.startsWith('bi-')) {
+                // Podrías mostrar una previsualización del icono aquí
+                console.log('Icono seleccionado:', iconoValue);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

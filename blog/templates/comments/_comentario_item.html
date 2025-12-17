@@ -1,0 +1,86 @@
+<!-- templates/comments/_comentario_item.html -->
+<div class="card mb-3 border-0 shadow-sm comentario-item" 
+     id="comentario-{{ comentario.id }}"
+     data-estado="{{ comentario.estado }}"
+     data-usuario-id="{{ comentario.usuario.id }}">
+    <div class="card-body">
+        <!-- Cabecera con estado -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center">
+                <!-- Avatar del usuario -->
+                {% if comentario.usuario.perfil and comentario.usuario.perfil.imagen %}
+                <img src="{{ comentario.usuario.perfil.imagen.url }}" 
+                     alt="{{ comentario.autor }}"
+                     class="rounded-circle me-3"
+                     width="40" height="40"
+                     style="object-fit: cover;">
+                {% else %}
+                <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-3"
+                     style="width: 40px; height: 40px;">
+                    <i class="bi bi-person text-white"></i>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <h6 class="mb-0 fw-bold">{{ comentario.autor }}</h6>
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>
+                        {{ comentario.fecha_creacion|timesince }} atrás
+                        
+                        <!-- Badge de estado -->
+                        {% if comentario.estado == 'pendiente' %}
+                        <span class="badge bg-warning ms-2">
+                            <i class="bi bi-clock-history me-1"></i>Pendiente
+                        </span>
+                        {% elif comentario.estado == 'rechazado' %}
+                        <span class="badge bg-danger ms-2">
+                            <i class="bi bi-x-circle me-1"></i>Rechazado
+                        </span>
+                        {% elif comentario.estado == 'aprobado' and comentario.moderado_por %}
+                        <span class="badge bg-success ms-2" 
+                              title="Aprobado por {{ comentario.moderado_por.username }}">
+                            <i class="bi bi-shield-check me-1"></i>Aprobado
+                        </span>
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Acciones del comentario -->
+            <div class="btn-group" role="group">
+                <!-- Botón Me gusta -->
+                <button type="button" 
+                        class="btn btn-sm btn-outline-warning like-comentario" 
+                        data-comentario-id="{{ comentario.id }}"
+                        title="Me gusta">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                    <span class="me-gusta-count">{{ comentario.me_gusta }}</span>
+                </button>
+                
+                <!-- Botones de edición/eliminación (solo para dueño o staff) -->
+                {% if user == comentario.usuario or user.is_staff or user.is_superuser %}
+                    {% if user == comentario.usuario %}
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-secondary editar-comentario"
+                            data-comentario-id="{{ comentario.id }}"
+                            title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    {% endif %}
+                    
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger eliminar-comentario"
+                            data-comentario-id="{{ comentario.id }}"
+                            title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Contenido del comentario -->
+        <div class="comentario-contenido" id="contenido-{{ comentario.id }}">
+            <p class="mb-0">{{ comentario.contenido|linebreaksbr }}</p>
+        </div>
+    </div>
+</div>

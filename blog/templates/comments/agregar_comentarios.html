@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load posts_extras %}
+{% load user_tags %}
+
+{% block title %}Agregar Comentario{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-comment-medical"></i> Agregar Nuevo Comentario
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Campo Autor -->
+                        <div class="mb-3">
+                            <label for="{{ form.autor.id_for_label }}" class="form-label">
+                                <i class="fas fa-user"></i> Nombre
+                            </label>
+                            {{ form.autor }}
+                            {% if form.autor.errors %}
+                            <div class="text-danger">
+                                {% for error in form.autor.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Campo Contenido -->
+                        <div class="mb-3">
+                            <label for="{{ form.contenido.id_for_label }}" class="form-label">
+                                <i class="fas fa-comment-dots"></i> Comentario
+                            </label>
+                            {{ form.contenido }}
+                            {% if form.contenido.errors %}
+                            <div class="text-danger">
+                                {% for error in form.contenido.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Escribe tu opinión sobre este viaje.</div>
+                        </div>
+                        
+                        <!-- Campo Post (oculto si vienes desde un post específico) -->
+                        {% if form.post %}
+                        <div class="mb-3">
+                            <label for="{{ form.post.id_for_label }}" class="form-label">
+                                <i class="fas fa-plane"></i> Viaje
+                            </label>
+                            {{ form.post }}
+                            {% if form.post.errors %}
+                            <div class="text-danger">
+                                {% for error in form.post.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'apps.comments:listar_comentarios' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver a la lista
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane"></i> Publicar Comentario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+                    <small><i class="fas fa-info-circle"></i> Todos los comentarios son moderados antes de su publicación.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    textarea.form-control {
+        min-height: 150px;
+        resize: vertical;
+    }
+    
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .card {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+</style>
+{% endblock %}

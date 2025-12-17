@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Editar Perfil - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Mi Perfil
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Por favor, corrige los errores a continuación.
+                        </div>
+                        {% endif %}
+                        
+                        <h6 class="fw-bold mb-3 pt-2 border-top">Información Básica</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    Nombre
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                <div class="text-danger small">{{ form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    Apellido
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                <div class="text-danger small">{{ form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                Email
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Si tienes modelo Perfil, agrega estos campos -->
+                        {% if perfil_form %}
+                        <h6 class="fw-bold mb-3 pt-4 border-top">Información Adicional</h6>
+                        
+                        <div class="mb-3">
+                            <label for="{{ perfil_form.imagen.id_for_label }}" class="form-label">
+                                Foto de Perfil
+                            </label>
+                            {% if user.perfil and user.perfil.imagen %}
+                            <div class="mb-3">
+                                <img src="{{ user.perfil.imagen.url }}" 
+                                     alt="Foto actual" 
+                                     class="rounded-circle border" 
+                                     width="100" height="100">
+                                <p class="small text-muted mt-2">Foto actual</p>
+                            </div>
+                            {% endif %}
+                            {{ perfil_form.imagen }}
+                            {% if perfil_form.imagen.errors %}
+                            <div class="text-danger small">{{ perfil_form.imagen.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ perfil_form.pais.id_for_label }}" class="form-label">
+                                    País
+                                </label>
+                                {{ perfil_form.pais }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ perfil_form.ciudad.id_for_label }}" class="form-label">
+                                    Ciudad
+                                </label>
+                                {{ perfil_form.ciudad }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ perfil_form.biografia.id_for_label }}" class="form-label">
+                                Biografía
+                            </label>
+                            {{ perfil_form.biografia }}
+                            <div class="form-text">
+                                Cuéntanos sobre ti, tus intereses de viaje, etc.
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'usuarios:perfil' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Enlace a cambiar contraseña -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-body text-center">
+                    <p class="mb-0">
+                        ¿Quieres cambiar tu contraseña?
+                        <a href="{% url 'usuarios:cambiar_password' %}" class="text-warning fw-bold">
+                            Haz clic aquí
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+</style>
+{% endblock %}

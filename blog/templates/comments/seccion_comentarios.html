@@ -1,0 +1,543 @@
+<!-- templates/comments/seccion_comentarios.html -->
+
+<div class="card border-0 shadow-sm mt-5" id="seccion-comentarios">
+    <div class="card-header bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                <i class="bi bi-chat-text me-2"></i>Comentarios
+                <span class="badge bg-warning ms-2">{{ post.comentarios.count }}</span>
+            </h5>
+            
+            <!-- Botón para recargar comentarios -->
+            <button class="btn btn-sm btn-outline-warning" id="recargar-comentarios">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        <!-- Formulario para comentar (solo usuarios autenticados) -->
+        {% if user.is_authenticated %}
+        <div class="mb-4">
+            <form method="POST" action="{% url 'comments:agregar_comentario_post' post.id %}" 
+                  id="form-comentario" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="contenido" class="form-label fw-bold">
+                        <i class="bi bi-pencil me-1"></i>Deja tu comentario
+                    </label>
+                    <textarea name="contenido" id="contenido" 
+                              class="form-control" 
+                              rows="3" 
+                              placeholder="Comparte tu opinión sobre este viaje..."
+                              required></textarea>
+                    <div class="invalid-feedback">
+                        Por favor escribe un comentario.
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Tu comentario será publicado inmediatamente
+                    </small>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-send me-1"></i>Publicar
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <!-- Mensaje para usuarios no autenticados -->
+        <div class="alert alert-info text-center">
+            <i class="bi bi-person-lock me-2"></i>
+            <a href="{% url 'login' %}?next={{ request.path }}" class="alert-link">
+                Inicia sesión
+            </a> 
+            para comentar y reaccionar
+        </div>
+        {% endif %}
+        
+        <!-- Lista de comentarios -->
+        <div id="lista-comentarios">
+            {% if post.comentarios.all %}
+                {% for comentario in post.comentarios.all %}
+                <div class="comentario-item mb-4 pb-4 {% if not forloop.last %}border-bottom{% endif %}" 
+                     data-comentario-id="{{ comentario.id }}">
+                    <!-- Header del comentario -->
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center">
+                            <!-- Avatar del autor -->
+                            {% if comentario.usuario.perfil and comentario.usuario.perfil.imagen %}
+                            <img src="{{ comentario.usuario.perfil.imagen.url }}" 
+                                 alt="{{ comentario.autor }}"
+                                 class="rounded-circle me-2"
+                                 width="40" height="40"
+                                 style="object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2"
+                                 style="width: 40px; height: 40px;">
+                                <i class="bi bi-person text-white"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <div>
+                                <h6 class="fw-bold mb-0">{{ comentario.autor }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    {{ comentario.fecha_creacion|date:"d/m/Y H:i" }}
+                                    {% if comentario.fecha_modificacion != comentario.fecha_creacion %}
+                                    <span class="ms-2" title="Editado">
+                                        <i class="bi bi-pencil"></i> Editado
+                                    </span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- Acciones (solo autor o colaboradores) -->
+                        {% if user.is_authenticated and user == comentario.usuario or es_editor or user.is_staff %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary border-0 dropdown-toggle" 
+                                    type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                {% if user == comentario.usuario or user.has_perm('comments.moderar_comentarios') %}
+                                <li>
+                                    <a class="dropdown-item text-warning" 
+                                       href="{% url 'comments:modificar_comentario' comentario.id %}">
+                                        <i class="bi bi-pencil me-2"></i>Editar
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% if user == comentario.usuario or user.has_perm('comments.moderar_comentarios') %}
+                                <li>
+                                    <button class="dropdown-item text-danger eliminar-comentario-btn" 
+                                            data-comentario-id="{{ comentario.id }}">
+                                        <i class="bi bi-trash me-2"></i>Eliminar
+                                    </button>
+                                </li>
+                                {% endif %}
+                                
+                                {% if user.has_perm('comments.moderar_comentarios') and user != comentario.usuario %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <small class="dropdown-item text-muted">
+                                        <i class="bi bi-shield-check me-2"></i>
+                                        Modo moderador
+                                    </small>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contenido del comentario -->
+                    <div class="mb-3">
+                        <p class="mb-0">{{ comentario.contenido|linebreaks }}</p>
+                    </div>
+                    
+                    <!-- Reacciones -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <!-- Botón de me gusta -->
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger me-gusta-btn {% if user.is_authenticated and comentario.reacciones.filter(usuario=user).exists %}active{% endif %}"
+                                    data-comentario-id="{{ comentario.id }}"
+                                    {% if not user.is_authenticated %}disabled{% endif %}>
+                                <i class="bi bi-heart{% if user.is_authenticated and comentario.reacciones.filter(usuario=user).exists %}-fill{% endif %} me-1"></i>
+                                <span class="me-gusta-count">{{ comentario.me_gusta }}</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Estadísticas -->
+                        <div class="text-muted small">
+                            <span class="me-3">
+                                <i class="bi bi-hand-thumbs-up"></i> {{ comentario.me_gusta }}
+                            </span>
+                            {% if comentario.reacciones.exists %}
+                            <span>
+                                <i class="bi bi-people"></i> {{ comentario.reacciones.values('usuario').distinct.count }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <!-- Sin comentarios -->
+            <div class="text-center py-5">
+                <i class="bi bi-chat-square-text display-6 text-muted mb-3"></i>
+                <p class="text-muted mb-4">Aún no hay comentarios. ¡Sé el primero en comentar!</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Paginación para comentarios -->
+        {% if post.comentarios.count > 10 %}
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-warning btn-sm" id="ver-mas-comentarios">
+                <i class="bi bi-arrow-down-circle me-1"></i>Ver más comentarios
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar comentario -->
+<div class="modal fade" id="modalEliminarComentario" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar este comentario?</p>
+                <p class="text-muted small">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminarComentario" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="comentario_id" id="comentario_id_eliminar">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para manejar comentarios -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuración de CSRF para AJAX
+    const csrftoken = getCookie('csrftoken');
+    
+    // Función para obtener cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Manejar el formulario de comentario con AJAX
+    const formComentario = document.getElementById('form-comentario');
+    if (formComentario) {
+        formComentario.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const textarea = this.querySelector('textarea');
+            const contenido = textarea.value.trim();
+            
+            if (!contenido) {
+                textarea.classList.add('is-invalid');
+                return;
+            }
+            
+            // Deshabilitar botón durante el envío
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Publicando...';
+            submitBtn.disabled = true;
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Limpiar formulario
+                    textarea.value = '';
+                    textarea.classList.remove('is-invalid');
+                    
+                    // Recargar comentarios
+                    recargarComentarios();
+                    
+                    // Mostrar mensaje de éxito
+                    showToast('¡Comentario publicado!', 'success');
+                } else {
+                    showToast(data.error || 'Error al publicar comentario', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error de conexión', 'danger');
+            })
+            .finally(() => {
+                // Restaurar botón
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+    
+    // Manejar reacciones (me gusta)
+    document.querySelectorAll('.me-gusta-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            const likeCount = this.querySelector('.me-gusta-count');
+            const icon = this.querySelector('i');
+            
+            if (!comentarioId) return;
+            
+            // Cambiar estado visual inmediatamente
+            const isActive = this.classList.contains('active');
+            this.classList.toggle('active');
+            
+            if (isActive) {
+                icon.className = 'bi bi-heart me-1';
+                likeCount.textContent = parseInt(likeCount.textContent) - 1;
+            } else {
+                icon.className = 'bi bi-heart-fill me-1';
+                likeCount.textContent = parseInt(likeCount.textContent) + 1;
+            }
+            
+            // Enviar petición AJAX
+            fetch(`/comments/reaccion/${comentarioId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                },
+                body: `tipo=like`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    // Revertir cambios si falló
+                    this.classList.toggle('active');
+                    if (isActive) {
+                        icon.className = 'bi bi-heart-fill me-1';
+                        likeCount.textContent = parseInt(likeCount.textContent) + 1;
+                    } else {
+                        icon.className = 'bi bi-heart me-1';
+                        likeCount.textContent = parseInt(likeCount.textContent) - 1;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Revertir cambios
+                this.classList.toggle('active');
+                if (isActive) {
+                    icon.className = 'bi bi-heart-fill me-1';
+                    likeCount.textContent = parseInt(likeCount.textContent) + 1;
+                } else {
+                    icon.className = 'bi bi-heart me-1';
+                    likeCount.textContent = parseInt(likeCount.textContent) - 1;
+                }
+            });
+        });
+    });
+    
+    // Manejar eliminación de comentarios
+    document.querySelectorAll('.eliminar-comentario-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            const modal = new bootstrap.Modal(document.getElementById('modalEliminarComentario'));
+            const form = document.getElementById('formEliminarComentario');
+            
+            // Configurar el formulario de eliminación
+            form.action = `/comments/eliminar_comentario/${comentarioId}/`;
+            document.getElementById('comentario_id_eliminar').value = comentarioId;
+            
+            // Mostrar modal
+            modal.show();
+        });
+    });
+    
+    // Formulario de eliminación
+    const formEliminar = document.getElementById('formEliminarComentario');
+    if (formEliminar) {
+        formEliminar.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Cerrar modal
+                    bootstrap.Modal.getInstance(document.getElementById('modalEliminarComentario')).hide();
+                    
+                    // Recargar comentarios
+                    recargarComentarios();
+                    
+                    // Mostrar mensaje de éxito
+                    showToast('Comentario eliminado', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error al eliminar comentario', 'danger');
+            });
+        });
+    }
+    
+    // Botón recargar comentarios
+    const btnRecargar = document.getElementById('recargar-comentarios');
+    if (btnRecargar) {
+        btnRecargar.addEventListener('click', recargarComentarios);
+    }
+    
+    // Función para recargar comentarios
+    function recargarComentarios() {
+        const lista = document.getElementById('lista-comentarios');
+        const btnRecargar = document.getElementById('recargar-comentarios');
+        
+        if (!lista || !btnRecargar) return;
+        
+        // Mostrar indicador de carga
+        const originalHTML = lista.innerHTML;
+        lista.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando comentarios...</p>
+            </div>
+        `;
+        
+        btnRec
+                btnRecargar.disabled = true;
+        btnRecargar.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Cargando...';
+        
+        // Hacer petición AJAX para obtener comentarios
+        fetch(`/comments/api/comentarios/{{ post.id }}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Aquí podrías actualizar la lista de comentarios con data.comentarios
+                // Por ahora, recargamos la página
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                lista.innerHTML = originalHTML;
+                showToast('Error al cargar comentarios', 'danger');
+            })
+            .finally(() => {
+                btnRecargar.disabled = false;
+                btnRecargar.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            });
+    }
+    
+    // Función para mostrar toasts (notificaciones)
+    function showToast(message, type = 'info') {
+        // Crear toast container si no existe
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '1060';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Crear toast
+        const toastId = 'toast-' + Date.now();
+        const toast = document.createElement('div');
+        toast.id = toastId;
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'danger' ? 'bi-exclamation-triangle' : 'bi-info-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Mostrar toast
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: 3000
+        });
+        bsToast.show();
+        
+        // Remover toast después de ocultarse
+        toast.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
+    
+    // Validación del textarea en tiempo real
+    const textarea = document.querySelector('#contenido');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.comentario-item {
+    transition: all 0.3s ease;
+}
+
+.comentario-item:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    padding: 10px;
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.me-gusta-btn.active {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.me-gusta-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.comentario-item {
+    animation: fadeIn 0.3s ease;
+}
+</style>

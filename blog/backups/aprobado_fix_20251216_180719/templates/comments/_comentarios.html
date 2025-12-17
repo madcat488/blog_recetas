@@ -1,0 +1,819 @@
+<!-- templates/comments/_comentarios.html -->
+{% load static %}
+
+<div class="comentarios-section mt-5" id="comentarios">
+    <h3 class="mb-4 border-bottom pb-2">
+        <i class="bi bi-chat-left-text me-2"></i>
+        Comentarios 
+        <span class="badge bg-warning rounded-pill ms-2" id="contador-comentarios">
+            {{ comentarios|length }}
+        </span>
+    </h3>
+    
+    <!-- Formulario para nuevo comentario -->
+    {% if user.is_authenticated %}
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3">
+                <i class="bi bi-pencil-square me-2"></i>
+                {% if user == post.autor and user.colaborador %}
+                Agregar un comentario (Auto-aprobado)
+                {% else %}
+                Agregar un comentario
+                {% endif %}
+            </h5>
+            <form method="post" action="{% url 'comments:agregar_comentario' post.id %}" 
+                  id="form-comentario" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="id_contenido" class="form-label">
+                        Tu comentario:
+                    </label>
+                    <textarea name="contenido" id="id_contenido" 
+                              class="form-control" 
+                              rows="4" 
+                              placeholder="Escribe tu comentario aquí..."
+                              maxlength="1000"
+                              required></textarea>
+                    <div class="form-text">
+                        Máximo 1000 caracteres. Sé respetuoso :)
+                        {% if user == post.autor and user.colaborador %}
+                        <span class="text-success ms-2">
+                            <i class="bi bi-shield-check"></i> Tu comentario será auto-aprobado.
+                        </span>
+                        {% else %}
+                        <span class="text-warning ms-2">
+                            <i class="bi bi-clock-history"></i> Tu comentario será revisado por un moderador.
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Publicando como: <strong>{{ user.username }}</strong>
+                    </small>
+                    <button type="submit" class="btn btn-warning" id="btn-enviar-comentario">
+                        <i class="bi bi-send me-2"></i>
+                        {% if user == post.autor and user.colaborador %}
+                        Publicar comentario
+                        {% else %}
+                        Enviar para revisión
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle me-2"></i>
+        <a href="{% url 'usuarios:login' %}?next={{ request.path }}" 
+           class="alert-link">Inicia sesión</a> 
+        para dejar un comentario.
+    </div>
+    {% endif %}
+    
+    <!-- Mensaje de éxito después de enviar -->
+    <div id="mensaje-exito" class="alert alert-success d-none mb-4">
+        <i class="bi bi-check-circle me-2"></i>
+        <span id="texto-mensaje"></span>
+    </div>
+    
+    <!-- Filtros de estado (solo para moderadores) -->
+    {% if user.is_authenticated and user.colaborador or user.is_staff or user.is_superuser %}
+    <div class="card border-0 bg-light mb-4">
+        <div class="card-body py-2">
+            <div class="d-flex align-items-center">
+                <small class="text-muted me-3">
+                    <i class="bi bi-funnel me-1"></i>Filtrar:
+                </small>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" 
+                            class="btn btn-outline-warning active filtrar-comentarios" 
+                            data-estado="todos">
+                        Todos
+                    </button>
+                    <button type="button" 
+                            class="btn btn-outline-warning filtrar-comentarios" 
+                            data-estado="aprobados">
+                        Aprobados
+                    </button>
+                    <button type="button" 
+                            class="btn btn-outline-warning filtrar-comentarios" 
+                            data-estado="pendientes">
+                        Pendientes
+                    </button>
+                    <button type="button" 
+                            class="btn btn-outline-warning filtrar-comentarios" 
+                            data-estado="rechazados">
+                        Rechazados
+                    </button>
+                </div>
+                
+                <!-- Botón para ver pendientes -->
+                {% if user.colaborador or user.is_staff or user.is_superuser %}
+                <a href="{% url 'comments:comentarios_pendientes' %}" 
+                   class="btn btn-sm btn-outline-danger ms-3">
+                    <i class="bi bi-shield-check me-1"></i>
+                    Moderar pendientes
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Lista de comentarios existentes -->
+    <div class="comentarios-lista" id="lista-comentarios">
+        {% if comentarios %}
+            {% for comentario in comentarios %}
+            <div class="card mb-3 border-0 shadow-sm comentario-item" 
+                 id="comentario-{{ comentario.id }}"
+                 data-estado="{{ comentario.estado }}"
+                 data-usuario-id="{{ comentario.usuario.id }}">
+                <div class="card-body">
+                    <!-- Cabecera con estado -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center">
+                            <!-- Avatar del usuario -->
+                            {% if comentario.usuario.perfil and comentario.usuario.perfil.imagen %}
+                            <img src="{{ comentario.usuario.perfil.imagen.url }}" 
+                                 alt="{{ comentario.autor }}"
+                                 class="rounded-circle me-3"
+                                 width="40" height="40"
+                                 style="object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-3"
+                                 style="width: 40px; height: 40px;">
+                                <i class="bi bi-person text-white"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ comentario.autor }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    {{ comentario.fecha_creacion|timesince }} atrás
+                                    
+                                    <!-- Badge de estado -->
+                                    {% if comentario.estado == 'pendiente' %}
+                                    <span class="badge bg-warning ms-2">
+                                        <i class="bi bi-clock-history me-1"></i>Pendiente
+                                    </span>
+                                    {% elif comentario.estado == 'rechazado' %}
+                                    <span class="badge bg-danger ms-2">
+                                        <i class="bi bi-x-circle me-1"></i>Rechazado
+                                    </span>
+                                    {% elif comentario.estado == 'aprobado' and comentario.moderado_por %}
+                                    <span class="badge bg-success ms-2" 
+                                          title="Aprobado por {{ comentario.moderado_por.username }}">
+                                        <i class="bi bi-shield-check me-1"></i>Aprobado
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <!-- Indicador de edición -->
+                                    {% if comentario.fecha_modificacion != comentario.fecha_creacion %}
+                                    <span class="ms-2" title="Editado">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- Acciones del comentario -->
+                        <div class="btn-group" role="group">
+                            <!-- Botón Me gusta -->
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-warning like-comentario" 
+                                    data-comentario-id="{{ comentario.id }}"
+                                    title="Me gusta">
+                                <i class="bi bi-hand-thumbs-up"></i>
+                                <span class="me-gusta-count">{{ comentario.me_gusta }}</span>
+                            </button>
+                            
+                            <!-- Botones de moderación (solo para moderadores) -->
+                            {% if user.is_authenticated and comentario.puede_ser_moderado_por %}
+                                {% if comentario.estado == 'pendiente' %}
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-success moderar-comentario" 
+                                        data-comentario-id="{{ comentario.id }}"
+                                        data-accion="aprobar"
+                                        title="Aprobar">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-danger moderar-comentario" 
+                                        data-comentario-id="{{ comentario.id }}"
+                                        data-accion="rechazar"
+                                        title="Rechazar">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <!-- Botón para moderación detallada -->
+                                <a href="{% url 'comments:moderar_comentario' comentario.id %}" 
+                                   class="btn btn-sm btn-outline-info"
+                                   title="Moderar detalladamente">
+                                    <i class="bi bi-sliders"></i>
+                                </a>
+                            {% endif %}
+                            
+                            <!-- Editar/Eliminar (solo para dueño o staff) -->
+                            {% if user.is_authenticated and user == comentario.usuario or user.is_staff or user.is_superuser %}
+                                {% if user == comentario.usuario %}
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-secondary editar-comentario"
+                                        data-comentario-id="{{ comentario.id }}"
+                                        title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-danger eliminar-comentario"
+                                        data-comentario-id="{{ comentario.id }}"
+                                        title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Contenido del comentario -->
+                    <div class="comentario-contenido" id="contenido-{{ comentario.id }}">
+                        {% if comentario.estado == 'rechazado' %}
+                        <div class="alert alert-danger py-2 mb-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Este comentario fue rechazado:</strong>
+                            {% if comentario.motivo_rechazo %}
+                            {{ comentario.motivo_rechazo }}
+                            {% else %}
+                            No se especificó motivo.
+                            {% endif %}
+                            
+                            {% if comentario.moderado_por %}
+                            <small class="d-block mt-1">
+                                Moderado por: {{ comentario.moderado_por.username }}
+                                {% if comentario.fecha_moderacion %}
+                                el {{ comentario.fecha_moderacion|date:"d/m/Y H:i" }}
+                                {% endif %}
+                            </small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <p class="mb-0">{{ comentario.contenido|linebreaksbr }}</p>
+                    </div>
+                    
+                    <!-- Formulario de edición (oculto por defecto) -->
+                    <div class="editar-form-container d-none mt-3" 
+                         id="editar-form-{{ comentario.id }}">
+                        <form class="editar-comentario-form" 
+                              data-comentario-id="{{ comentario.id }}">
+                            {% csrf_token %}
+                            <div class="mb-2">
+                                <textarea class="form-control" 
+                                          rows="4"
+                                          maxlength="1000">{{ comentario.contenido }}</textarea>
+                                <div class="form-text">
+                                    Al editar, tu comentario volverá a estado "pendiente" para revisión.
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" 
+                                        class="btn btn-sm btn-secondary cancelar-edicion"
+                                        data-comentario-id="{{ comentario.id }}">
+                                    Cancelar
+                                </button>
+                                <button type="submit" 
+                                        class="btn btn-sm btn-warning">
+                                    <i class="bi bi-save me-1"></i>
+                                    Guardar cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="text-center py-5 border rounded">
+            <i class="bi bi-chat-left-text display-4 text-muted mb-3"></i>
+            <h4 class="text-muted mb-3">No hay comentarios aún</h4>
+            <p class="text-muted">Sé el primero en comentar este viaje.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Paginación para comentarios -->
+    {% if comentarios.has_other_pages %}
+    <nav aria-label="Paginación de comentarios" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if comentarios.has_previous %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ comentarios.previous_page_number }}#comentarios">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for i in comentarios.paginator.page_range %}
+            <li class="page-item {% if comentarios.number == i %}active{% endif %}">
+                <a class="page-link" href="?page={{ i }}#comentarios">
+                    {{ i }}
+                </a>
+            </li>
+            {% endfor %}
+            
+            {% if comentarios.has_next %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ comentarios.next_page_number }}#comentarios">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.comentarios-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-top: 2rem;
+}
+
+.comentarios-section h3 {
+    color: #333;
+    font-weight: 600;
+    position: relative;
+}
+
+.comentarios-section h3::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ffc107, #ff9800);
+    border-radius: 2px;
+}
+
+.card {
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 500;
+}
+
+.badge.bg-warning {
+    color: #000;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Estilos para el formulario */
+.form-control:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert-info {
+    background-color: rgba(23, 162, 184, 0.1);
+    color: #0c5460;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+/* Estados de comentarios */
+.comentario-item[data-estado="pendiente"] {
+    border-left: 4px solid #ffc107;
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+.comentario-item[data-estado="rechazado"] {
+    border-left: 4px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.05);
+    opacity: 0.8;
+}
+
+.comentario-item[data-estado="aprobado"] {
+    border-left: 4px solid #28a745;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.comentario-item {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn:active {
+    animation: pulse 0.2s;
+}
+
+/* Botones de acción */
+.btn-group .btn {
+    border-radius: 4px !important;
+    margin: 0 1px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .comentarios-section {
+        padding: 1rem;
+    }
+    
+    .btn-group {
+        flex-wrap: wrap;
+        gap: 2px;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ========== MANEJO DEL FORMULARIO DE NUEVO COMENTARIO ==========
+    const formComentario = document.getElementById('form-comentario');
+    if (formComentario) {
+        formComentario.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btnEnviar = document.getElementById('btn-enviar-comentario');
+            const textoOriginal = btnEnviar.innerHTML;
+            
+            // Mostrar loading
+            btnEnviar.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Enviando...';
+            btnEnviar.disabled = true;
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar mensaje de éxito
+                    const mensajeExito = document.getElementById('mensaje-exito');
+                    const textoMensaje = document.getElementById('texto-mensaje');
+                    
+                    textoMensaje.textContent = data.message;
+                    mensajeExito.classList.remove('d-none');
+                    
+                    // Limpiar formulario
+                    this.reset();
+                    
+                    // Recargar comentarios después de 2 segundos
+                    setTimeout(() => {
+                        cargarComentarios();
+                        mensajeExito.classList.add('d-none');
+                    }, 2000);
+                } else {
+                    alert('Error: ' + (data.error || 'No se pudo enviar el comentario'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al enviar el comentario');
+            })
+            .finally(() => {
+                // Restaurar botón
+                btnEnviar.innerHTML = textoOriginal;
+                btnEnviar.disabled = false;
+            });
+        });
+    }
+    
+    // ========== FILTRADO DE COMENTARIOS ==========
+    document.querySelectorAll('.filtrar-comentarios').forEach(button => {
+        button.addEventListener('click', function() {
+            const estado = this.dataset.estado;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.filtrar-comentarios').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Filtrar comentarios
+            const comentarios = document.querySelectorAll('.comentario-item');
+            let visibleCount = 0;
+            
+            comentarios.forEach(comentario => {
+                const comentarioEstado = comentario.dataset.estado;
+                
+                if (estado === 'todos' || estado === comentarioEstado) {
+                    comentario.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    comentario.style.display = 'none';
+                }
+            });
+            
+            // Actualizar contador
+            const contador = document.getElementById('contador-comentarios');
+            if (contador) {
+                contador.textContent = visibleCount;
+            }
+        });
+    });
+    
+    // ========== MODERACIÓN RÁPIDA ==========
+    document.querySelectorAll('.moderar-comentario').forEach(button => {
+        button.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            const accion = this.dataset.accion;
+            const esRechazar = accion === 'rechazar';
+            
+            if (esRechazar && !confirm('¿Estás seguro de rechazar este comentario?')) {
+                return;
+            }
+            
+            const url = esRechazar 
+                ? `/comentarios/rechazar-rapido/${comentarioId}/`
+                : `/comentarios/aprobar-rapido/${comentarioId}/`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar estado visual
+                    const comentarioDiv = document.getElementById(`comentario-${comentarioId}`);
+                    const badgeEstado = comentarioDiv.querySelector('.badge');
+                    
+                    if (badgeEstado) {
+                        badgeEstado.className = `badge bg-${esRechazar ? 'danger' : 'success'} ms-2`;
+                        badgeEstado.innerHTML = `<i class="bi bi-${esRechazar ? 'x-circle' : 'shield-check'} me-1"></i>${data.estado_display}`;
+                    }
+                    
+                    // Actualizar atributo data-estado
+                    comentarioDiv.dataset.estado = data.estado;
+                    
+                    // Mostrar mensaje
+                    alert(`Comentario ${data.estado_display} por ${data.moderado_por}`);
+                    
+                    // Ocultar botones de moderación
+                    comentarioDiv.querySelectorAll('.moderar-comentario').forEach(btn => {
+                        btn.style.display = 'none';
+                    });
+                } else {
+                    alert('Error: ' + (data.error || 'No se pudo moderar el comentario'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al moderar el comentario');
+            });
+        });
+    });
+    
+    // ========== LIKE DE COMENTARIOS ==========
+    document.querySelectorAll('.like-comentario').forEach(button => {
+        button.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            const meGustaSpan = this.querySelector('.me-gusta-count');
+            
+            // Simular like/dislike (aquí integrarías con tu API)
+            const currentLikes = parseInt(meGustaSpan.textContent);
+            const isActive = this.classList.contains('active');
+            
+            if (isActive) {
+                this.classList.remove('active', 'btn-warning');
+                this.classList.add('btn-outline-warning');
+                meGustaSpan.textContent = currentLikes - 1;
+            } else {
+                this.classList.add('active', 'btn-warning');
+                this.classList.remove('btn-outline-warning');
+                meGustaSpan.textContent = currentLikes + 1;
+            }
+            
+            // Aquí iría la llamada AJAX real
+            // fetch(`/comentarios/like/${comentarioId}/`, {
+            //     method: 'POST',
+            //     headers: {
+            //         'X-CSRFToken': getCookie('csrftoken'),
+            //     }
+            // });
+        });
+    });
+    
+    // ========== EDITAR COMENTARIO ==========
+    document.querySelectorAll('.editar-comentario').forEach(button => {
+        button.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            const contenidoDiv = document.getElementById(`contenido-${comentarioId}`);
+            const editarForm = document.getElementById(`editar-form-${comentarioId}`);
+            
+            contenidoDiv.classList.add('d-none');
+            editarForm.classList.remove('d-none');
+        });
+    });
+    
+    // Cancelar edición
+    document.querySelectorAll('.cancelar-edicion').forEach(button => {
+        button.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            const contenidoDiv = document.getElementById(`contenido-${comentarioId}`);
+            const editarForm = document.getElementById(`editar-form-${comentarioId}`);
+            
+            contenidoDiv.classList.remove('d-none');
+            editarForm.classList.add('d-none');
+        });
+    });
+    
+    // Enviar edición
+    document.querySelectorAll('.editar-comentario-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const comentarioId = this.dataset.comentarioId;
+            const nuevoContenido = this.querySelector('textarea').value;
+            
+            if (nuevoContenido.trim().length < 10) {
+                alert('El comentario debe tener al menos 10 caracteres.');
+                return;
+            }
+            
+            fetch(`/comentarios/editar/${comentarioId}/`, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const contenidoDiv = document.getElementById(`contenido-${comentarioId}`);
+                    const editarForm = document.getElementById(`editar-form-${comentarioId}`);
+                    
+                    contenidoDiv.querySelector('p').textContent = nuevoContenido;
+                    contenidoDiv.classList.remove('d-none');
+                    editarForm.classList.add('d-none');
+                    
+                    // Actualizar estado a pendiente
+                    const comentarioDiv = document.getElementById(`comentario-${comentarioId}`);
+                    const badgeEstado = comentarioDiv.querySelector('.badge');
+                    
+                    if (badgeEstado) {
+                        badgeEstado.className = 'badge bg-warning ms-2';
+                        badgeEstado.innerHTML = '<i class="bi bi-clock-history me-1"></i>Pendiente';
+                        comentarioDiv.dataset.estado = 'pendiente';
+                    }
+                    
+                    alert(data.message || 'Comentario actualizado y enviado para revisión');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar el comentario');
+            });
+        });
+    });
+    
+    // ========== ELIMINAR COMENTARIO ==========
+    document.querySelectorAll('.eliminar-comentario').forEach(button => {
+        button.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            
+            if (!confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
+                return;
+            }
+            
+            fetch(`/comentarios/eliminar/${comentarioId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const comentarioDiv = document.getElementById(`comentario-${comentarioId}`);
+                    comentarioDiv.style.opacity = '0';
+                    setTimeout(() => {
+                        comentarioDiv.remove();
+                        
+                        // Actualizar contador
+                        const contador = document.getElementById('contador-comentarios');
+                        if (contador) {
+                            let count = parseInt(contador.textContent);
+                            if (count > 0) {
+                                contador.textContent = count - 1;
+                            }
+                        }
+                        
+                        alert('Comentario eliminado');
+                    }, 300);
+                } else {
+                    alert('Error: No se pudo eliminar el comentario');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar el comentario');
+            });
+        });
+    });
+    
+    // ========== FUNCIONES AUXILIARES ==========
+    
+    // Cargar comentarios via AJAX
+    function cargarComentarios() {
+        fetch(`/comentarios/api/comentarios/{{ post.id }}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Aquí implementarías la actualización dinámica de comentarios
+                console.log('Comentarios actualizados:', data);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    
+    // Función para obtener cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Auto-scroll a comentarios si hay hash
+    if (window.location.hash === '#comentarios') {
+        document.getElementById('comentarios').scrollIntoView({ behavior: 'smooth' });
+    }
+});
+</script>

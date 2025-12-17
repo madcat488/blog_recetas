@@ -1,0 +1,472 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}
+<title>Iniciar Sesión | Blog de Viajes</title>
+{% endblock %}
+
+{% block navegacion %}
+{% include 'navegacion.html' %}
+{% endblock %}
+
+{% block contenido %}
+
+<div class="login-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8">
+                <!-- Tarjeta principal -->
+                <div class="card login-card shadow-lg border-0 overflow-hidden">
+                    <div class="row g-0">
+                        <!-- Columna izquierda - Formulario -->
+                        <div class="col-lg-6">
+                            <div class="p-4 p-md-5 h-100 d-flex flex-column">
+                                <!-- Encabezado del formulario -->
+                                <div class="text-center mb-5">
+                                    <div class="login-icon mb-3">
+                                        <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                             style="width: 80px; height: 80px;">
+                                            <i class="bi bi-person-check-fill text-warning fs-1"></i>
+                                        </div>
+                                    </div>
+                                    <h2 class="fw-bold mb-2">Bienvenido de nuevo</h2>
+                                    <p class="text-muted">Ingresá a tu cuenta para continuar tu aventura</p>
+                                </div>
+                                
+                                <!-- Formulario de login -->
+                                <form method="post" class="needs-validation" novalidate>
+                                    {% csrf_token %}
+                                    
+                                    <!-- Mensajes de error generales -->
+                                    {% if form.non_field_errors %}
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        {{ form.non_field_errors|first }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Mensajes de éxito -->
+                                    {% if messages %}
+                                    {% for message in messages %}
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                    
+                                    <div class="mb-4">
+                                        <!-- Username -->
+                                        <label for="id_username" class="form-label fw-semibold">
+                                            <i class="bi bi-person-circle me-1 text-warning"></i>
+                                            Nombre de Usuario
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="bi bi-person"></i>
+                                            </span>
+                                            <input type="text" 
+                                                   name="username" 
+                                                   id="id_username" 
+                                                   class="form-control form-control-lg"
+                                                   placeholder="Ingresá tu usuario o email"
+                                                   required>
+                                        </div>
+                                        {% if form.username.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.username.errors|first }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <!-- Contraseña -->
+                                        <label for="id_password" class="form-label fw-semibold">
+                                            <i class="bi bi-key me-1 text-warning"></i>
+                                            Contraseña
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="bi bi-lock"></i>
+                                            </span>
+                                            <input type="password" 
+                                                   name="password" 
+                                                   id="id_password" 
+                                                   class="form-control form-control-lg"
+                                                   placeholder="Ingresá tu contraseña"
+                                                   required>
+                                            <button class="btn btn-outline-secondary toggle-password" type="button">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                        {% if form.password.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.password.errors|first }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Botón de inicio de sesión -->
+                                    <div class="mt-4">
+                                        <button type="submit" class="btn btn-warning btn-lg w-100 py-3 fw-bold shadow-sm">
+                                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                                            Iniciar Sesión
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Divisor -->
+                                    <div class="my-4 position-relative text-center">
+                                        <hr>
+                                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
+                                            O continuá con
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Login con redes sociales -->
+                                    <div class="row g-2 mb-4">
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-outline-dark btn-lg w-100">
+                                                <i class="bi bi-google me-2"></i>
+                                                Google
+                                            </button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-outline-primary btn-lg w-100">
+                                                <i class="bi bi-facebook me-2"></i>
+                                                Facebook
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Enlace a registro -->
+                                    <div class="text-center mt-4">
+                                        <p class="text-muted mb-0">
+                                            ¿No tenés una cuenta?
+                                                <a href="{% url 'usuarios:registrar' %}" class="text-warning fw-semibold text-decoration-none">
+                                                    Registrarse
+                                                </a>
+                                        </p>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Columna derecha - Imagen -->
+                        <div class="col-lg-6 d-none d-lg-block">
+                            <div class="login-image h-100 position-relative">
+                                <img src="{% static 'img/inicio_sesion.jpg' %}" 
+                                     class="img-fluid h-100 w-100" 
+                                     alt="Viajero iniciando sesión"
+                                     style="object-fit: cover;">
+                                
+                                <!-- Overlay con texto -->
+                                <div class="login-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end p-4">
+                                    <div class="text-white">
+                                        <h3 class="fw-bold mb-3">¡Tu comunidad viajera te espera!</h3>
+                                        <p class="mb-0 opacity-90">
+                                            Accedé a tus viajes guardados, conectá con otros viajeros 
+                                            y seguí compartiendo tus aventuras.
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Estadísticas -->
+                                    <div class="d-flex gap-3 mt-4">
+                                        <div class="text-white">
+                                            <div class="fs-3 fw-bold">24</div>
+                                            <div class="small opacity-75">Horas activas</div>
+                                        </div>
+                                        <div class="text-white">
+                                            <div class="fs-3 fw-bold">89</div>
+                                            <div class="small opacity-75">Nuevos viajes hoy</div>
+                                        </div>
+                                        <div class="text-white">
+                                            <div class="fs-3 fw-bold">312</div>
+                                            <div class="small opacity-75">Miembros conectados</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Badge decorativo -->
+                                <div class="position-absolute top-0 end-0 m-4">
+                                    <span class="badge bg-warning text-dark px-3 py-2">
+                                        <i class="bi bi-globe-americas me-1"></i>
+                                        Comunidad Global
+                                    </span>
+                                </div>
+                                
+                                <!-- Cita inspiradora -->
+                                <div class="position-absolute top-50 start-50 translate-middle w-75 text-center d-none d-xl-block">
+                                    <div class="quote-card bg-dark bg-opacity-75 rounded-3 p-4">
+                                        <i class="bi bi-quote text-warning fs-1 opacity-50"></i>
+                                        <p class="text-white mb-2 fst-italic">
+                                            "Viajar es la única cosa que comprás y te hace más rico"
+                                        </p>
+                                        <small class="text-white-50">- Anónimo</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Beneficios de la comunidad -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title text-center mb-4">¿Por qué iniciar sesión?</h5>
+                                <div class="row text-center">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="benefit-icon mx-auto mb-3">
+                                            <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="bi bi-bookmark-heart text-warning"></i>
+                                            </div>
+                                        </div>
+                                        <h6 class="fw-bold">Guardar viajes</h6>
+                                        <p class="small text-muted">Marcá tus destinos favoritos</p>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="benefit-icon mx-auto mb-3">
+                                            <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="bi bi-chat-dots text-warning"></i>
+                                            </div>
+                                        </div>
+                                        <h6 class="fw-bold">Comentar</h6>
+                                        <p class="small text-muted">Compartí tu experiencia</p>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="benefit-icon mx-auto mb-3">
+                                            <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="bi bi-people text-warning"></i>
+                                            </div>
+                                        </div>
+                                        <h6 class="fw-bold">Conectar</h6>
+                                        <p class="small text-muted">Encontrá otros viajeros</p>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="benefit-icon mx-auto mb-3">
+                                            <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="bi bi-bell text-warning"></i>
+                                            </div>
+                                        </div>
+                                        <h6 class="fw-bold">Notificaciones</h6>
+                                        <p class="small text-muted">Mantenete actualizado</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-card {
+        border-radius: 20px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .login-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .login-image {
+        position: relative;
+    }
+    
+    .login-overlay {
+        background: linear-gradient(to top, 
+                   rgba(0, 0, 0, 0.9) 0%, 
+                   rgba(0, 0, 0, 0.4) 50%,
+                   transparent 100%);
+    }
+    
+    .quote-card {
+        backdrop-filter: blur(5px);
+        animation: fadeIn 1s ease-out;
+    }
+    
+    /* Estilos para inputs */
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+    
+    .input-group-text {
+        border-radius: 10px 0 0 10px !important;
+        border-right: none;
+    }
+    
+    /* Botón para mostrar/ocultar contraseña */
+    .toggle-password {
+        border-radius: 0 10px 10px 0 !important;
+        border-left: none;
+    }
+    
+    /* Botones sociales */
+    .btn-outline-dark:hover {
+        background-color: #212529;
+        color: white;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    /* Animaciones */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .benefit-icon {
+        transition: all 0.3s ease;
+    }
+    
+    .benefit-icon:hover {
+        transform: scale(1.1);
+        background-color: rgba(255, 193, 7, 0.2) !important;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .login-card {
+            border-radius: 15px;
+        }
+        
+        .login-overlay {
+            padding: 2rem !important;
+        }
+        
+        .quote-card {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mostrar/ocultar contraseña
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.closest('.input-group').querySelector('input');
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('bi-eye');
+                    icon.classList.add('bi-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('bi-eye-slash');
+                    icon.classList.add('bi-eye');
+                }
+            });
+        });
+        
+        // Validación de formulario
+        const form = document.querySelector('form.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        }
+        
+        // Recordar usuario (simulado)
+        const rememberMe = document.getElementById('rememberMe');
+        const usernameInput = document.getElementById('id_username');
+        
+        // Cargar usuario guardado si existe
+        const savedUsername = localStorage.getItem('rememberedUsername');
+        if (savedUsername && rememberMe) {
+            usernameInput.value = savedUsername;
+            rememberMe.checked = true;
+        }
+        
+        // Guardar usuario si se selecciona recordar
+        if (rememberMe) {
+            rememberMe.addEventListener('change', function() {
+                if (this.checked && usernameInput.value) {
+                    localStorage.setItem('rememberedUsername', usernameInput.value);
+                } else {
+                    localStorage.removeItem('rememberedUsername');
+                }
+            });
+        }
+        
+        // Guardar automáticamente al escribir
+        if (usernameInput && rememberMe) {
+            usernameInput.addEventListener('input', function() {
+                if (rememberMe.checked && this.value) {
+                    localStorage.setItem('rememberedUsername', this.value);
+                }
+            });
+        }
+        
+        // Efecto de hover en iconos de beneficios
+        document.querySelectorAll('.benefit-icon').forEach(icon => {
+            icon.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1)';
+            });
+            
+            icon.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Auto-focus en el campo de usuario
+        if (usernameInput) {
+            usernameInput.focus();
+        }
+        
+        // Mostrar notificación de bienvenida si viene del registro
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('registered')) {
+            // Crear y mostrar notificación
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success alert-dismissible fade show mt-3';
+            notification.innerHTML = `
+                <i class="bi bi-check-circle-fill me-2"></i>
+                ¡Registro exitoso! Ahora podés iniciar sesión con tus credenciales.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            form.insertBefore(notification, form.firstChild);
+            
+            // Remover parámetro de la URL
+            history.replaceState(null, '', window.location.pathname);
+        }
+    });
+</script>
+{% endblock %}

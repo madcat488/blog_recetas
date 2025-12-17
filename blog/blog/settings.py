@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
+from django.urls import reverse_lazy
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,6 +29,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 AUTH_USER_MODEL= "usuarios.Usuario"
 
+LOGIN_URL= reverse_lazy('iniciar_sesion')
+LOGIN_REDIRECT_URL= reverse_lazy('index')
+LOGOUT_REDIRECT_URL= reverse_lazy('index')
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -39,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #apps propias
     'apps.usuarios',
-    'apps.post',
+    'apps.posts',
     'apps.comments',
 ]
 
@@ -51,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.posts.middleware.PostUpdateMiddleware',
 ]
 
 ROOT_URLCONF = 'blog.urls'
@@ -62,9 +68,12 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'blog.context_processors.categorias_globales',
+                'apps.comments.context_processors.comentarios_context',
             ],
         },
     },
@@ -119,9 +128,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIR= BASE_DIR / 'static'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-MEDIA= "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA= "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR , "media")
+
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024  # 2MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024  # 2MB
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

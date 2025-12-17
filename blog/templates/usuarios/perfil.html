@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load user_tags %}  <!-- Carga el template tag para verificar permisos -->
+
+{% block titulo %}Mi Perfil - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center p-4">
+                    <!-- Foto de perfil -->
+                    <div class="mb-4">
+                        {% if user.perfil and user.perfil.imagen %}
+                            <img src="{{ user.perfil.imagen.url }}" 
+                                 alt="Foto de perfil" 
+                                 class="rounded-circle img-fluid border border-3 border-warning"
+                                 style="width: 180px; height: 180px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto"
+                                 style="width: 180px; height: 180px;">
+                                <i class="bi bi-person-fill text-white" style="font-size: 4rem;"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <h4 class="card-title fw-bold mb-2">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted mb-3">@{{ user.username }}</p>
+                    
+                    <!-- Badge de rol -->
+                    {% if user.is_superuser %}
+                    <span class="badge bg-danger mb-3 px-3 py-2">Administrador</span>
+                    {% elif user.is_staff %}
+                    <span class="badge bg-warning mb-3 px-3 py-2">Staff</span>
+                    {% elif user|puede_crear_post %}
+                    <span class="badge bg-info mb-3 px-3 py-2">Colaborador</span>
+                    {% else %}
+                    <span class="badge bg-secondary mb-3 px-3 py-2">Viajero</span>
+                    {% endif %}
+                    
+                    <!-- Miembro desde -->
+                    <div class="mt-4 pt-3 border-top">
+                        <p class="text-muted mb-1">
+                            <i class="bi bi-calendar-check me-2"></i>Miembro desde
+                        </p>
+                        <p class="fw-semibold">{{ user.date_joined|date:"d/m/Y" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Menú lateral -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-menu-button-wide me-2"></i>Menú</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'usuarios:perfil' %}" 
+                       class="list-group-item list-group-item-action active border-0 py-3">
+                        <i class="bi bi-person-circle me-2"></i>Mi Perfil
+                    </a>
+                    
+                    <!-- SOLO para usuarios que pueden crear posts -->
+                    {% if user|puede_crear_post %}
+                    <a href="{% url 'posts:mis_publicaciones' %}" 
+                       class="list-group-item list-group-item-action border-0 py-3">
+                        <i class="bi bi-journal-text me-2"></i>Mis Publicaciones
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'usuarios:editar_perfil' %}" 
+                       class="list-group-item list-group-item-action border-0 py-3">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Perfil
+                    </a>
+                    
+                    <a href="{% url 'usuarios:cambiar_password' %}" 
+                       class="list-group-item list-group-item-action border-0 py-3">
+                        <i class="bi bi-key me-2"></i>Cambiar Contraseña
+                    </a>
+                    
+                    <a href="{% url 'usuarios:cerrar_sesion' %}" 
+                       class="list-group-item list-group-item-action border-0 py-3 text-danger">
+                        <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Estadísticas rápidas en sidebar -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart me-2"></i>Mi Actividad</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <h5 class="fw-bold text-primary">
+                                {% if user|puede_crear_post %}
+                                {{ user.post_set.count|default:0 }}
+                                {% else %}
+                                0
+                                {% endif %}
+                            </h5>
+                            <small class="text-muted">Viajes</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="fw-bold text-success">0</h5>
+                            <small class="text-muted">Comentarios</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="col-md-8">
+            <!-- Tarjeta de Información Personal -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-info-circle me-2"></i>Información Personal
+                        </h5>
+                        <a href="{% url 'usuarios:editar_perfil' %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Nombre de Usuario</label>
+                            <div class="border rounded p-3 bg-light">
+                                <strong>{{ user.username }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Email</label>
+                            <div class="border rounded p-3 bg-light">
+                                <strong>{{ user.email|default:"No especificado" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Nombre</label>
+                            <div class="border rounded p-3 bg-light">
+                                <strong>{{ user.first_name|default:"No especificado" }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Apellido</label>
+                            <div class="border rounded p-3 bg-light">
+                                <strong>{{ user.last_name|default:"No especificado" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información del perfil extendido -->
+                    {% if user.perfil %}
+                    <div class="row">
+                        {% if user.perfil.pais %}
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">País</label>
+                            <div class="border rounded p-3 bg-light">
+                                <strong>{{ user.perfil.pais }}</strong>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.perfil.ciudad %}
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small mb-1">Ciudad</label>
+                            <div class="border rounded p-3 bg-light">
+                                <strong>{{ user.perfil.ciudad }}</strong>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if user.perfil.biografia %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">Biografía</label>
+                        <div class="border rounded p-3 bg-light min-h-100">
+                            {{ user.perfil.biografia|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- SECCIÓN: Acciones disponibles según permisos -->
+            <div class="row mb-4">
+                <!-- Para TODOS los usuarios -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-chat-text display-5 text-primary"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Comentar Viajes</h5>
+                            <p class="text-muted small mb-3">
+                                Comparte tu opinión y experiencias en los viajes publicados
+                            </p>
+                            <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-compass me-1"></i>Explorar Viajes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SOLO para usuarios que pueden crear posts -->
+                {% if user|puede_crear_post %}
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-journal-plus display-5 text-warning"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Crear Viajes</h5>
+                            <p class="text-muted small mb-3">
+                                Comparte tus experiencias de viaje con la comunidad
+                            </p>
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a href="{% url 'posts:agregar_post' %}" class="btn btn-warning">
+                                    <i class="bi bi-plus-circle me-1"></i>Nuevo Viaje
+                                </a>
+                                <a href="{% url 'posts:mis_publicaciones' %}" class="btn btn-outline-warning">
+                                    <i class="bi bi-list-ul me-1"></i>Mis Viajes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- SECCIÓN: Sincronización (SOLO para creadores de contenido) -->
+            {% if user|puede_crear_post %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-arrow-repeat me-2"></i>Herramientas de Publicación
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-2">Sincronización de datos</h6>
+                            <p class="text-muted small mb-0">
+                                Si ves datos desactualizados en tus publicaciones, puedes forzar la actualización.
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <button onclick="refreshAllPosts()" class="btn btn-warning">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Refrescar mis posts
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Última sincronización: {% now "d/m/Y H:i" %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- SECCIÓN: Estadísticas completas -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-bar-chart-line me-2"></i>Estadísticas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <!-- Estadística 1: Viajes (solo visible para creadores) -->
+                        {% if user|puede_crear_post %}
+                        <div class="col-md-3 col-6 mb-4">
+                            <div class="p-3">
+                                <h2 class="text-primary fw-bold mb-2">
+                                    {{ user.post_set.count|default:0 }}
+                                </h2>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-journal-text text-primary me-2"></i>
+                                    <span class="text-muted">Viajes Publicados</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Estadística 2: Comentarios (para todos) -->
+                        <div class="col-md-3 col-6 mb-4">
+                            <div class="p-3">
+                                <h2 class="text-success fw-bold mb-2">0</h2>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-chat-text text-success me-2"></i>
+                                    <span class="text-muted">Comentarios</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Estadística 3: Favoritos (para todos) -->
+                        <div class="col-md-3 col-6 mb-4">
+                            <div class="p-3">
+                                <h2 class="text-warning fw-bold mb-2">0</h2>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-star text-warning me-2"></i>
+                                    <span class="text-muted">Favoritos</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Estadística 4: Seguidores (solo para creadores) -->
+                        {% if user|puede_crear_post %}
+                        <div class="col-md-3 col-6 mb-4">
+                            <div class="p-3">
+                                <h2 class="text-info fw-bold mb-2">0</h2>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-people text-info me-2"></i>
+                                    <span class="text-muted">Seguidores</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Si es usuario normal, mostramos 3 estadísticas centradas -->
+                        {% if not user|puede_crear_post %}
+                        <div class="col-md-4 col-6 mb-4">
+                            <div class="p-3">
+                                <h2 class="text-info fw-bold mb-2">0</h2>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-eye text-info me-2"></i>
+                                    <span class="text-muted">Viajes Vistos</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Mensaje para usuarios normales -->
+                    {% if not user|puede_crear_post %}
+                    <div class="text-center mt-3 pt-3 border-top">
+                        <p class="text-muted small">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            ¿Quieres compartir tus viajes? 
+                            <a href="#" class="text-warning text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalSerColaborador">
+                                Conviértete en colaborador
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para convertirse en colaborador -->
+<div class="modal fade" id="modalSerColaborador" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">¿Quieres ser colaborador?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Como colaborador podrás:</p>
+                <ul>
+                    <li>Crear y publicar tus propios viajes</li>
+                    <li>Gestionar tus publicaciones</li>
+                    <li>Acceder a estadísticas detalladas</li>
+                    <li>Tener un perfil de viajero destacado</li>
+                </ul>
+                <p class="mb-0">Contáctanos para más información sobre cómo convertirte en colaborador.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="mailto:colaboradores@blogviajes.com" class="btn btn-warning">Contactar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .min-h-100 {
+        min-height: 100px;
+    }
+    
+    .card {
+        border-radius: 15px;
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .list-group-item.active {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+    }
+    
+    .list-group-item:hover:not(.active) {
+        background-color: #f8f9fa;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        border: none;
+    }
+    
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    }
+    
+    /* Asegurar que las tarjetas de estadísticas tengan altura uniforme */
+    .p-3 {
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+</style>
+
+<script>
+function refreshAllPosts() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Actualizando...';
+    btn.disabled = true;
+    
+    // Aquí iría la lógica AJAX para refrescar posts
+    // Por ahora simulamos con un timeout
+    setTimeout(() => {
+        alert('¡Posts actualizados correctamente!');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }, 1500);
+}
+
+// Obtener token CSRF para AJAX
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// Mostrar/ocultar secciones según permisos
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,574 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Editar Lugar: {{ post.titulo }} - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar con información del lugar -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 90px;">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-geo-alt me-2"></i>Información del Lugar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Vista previa -->
+                    <div class="text-center mb-4">
+                        {% if post.imagen %}
+                        <img src="{{ post.imagen.url }}" 
+                             alt="{{ post.titulo }}" 
+                             class="img-fluid rounded shadow-sm mb-3"
+                             style="max-height: 180px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3"
+                             style="height: 180px;">
+                            <i class="bi bi-camera text-muted" style="font-size: 2rem;"></i>
+                        </div>
+                        {% endif %}
+                        <h6 class="fw-bold">{{ post.titulo }}</h6>
+                        <small class="text-muted">Vista previa actual</small>
+                    </div>
+                    
+                    <!-- Estadísticas -->
+                    <div class="border-top pt-3">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-bar-chart me-2"></i>Estadísticas
+                        </h6>
+                        <div class="row">
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">Estado:</small>
+                                <span class="badge {% if post.estado == 'publicado' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ post.get_estado_display }}
+                                </span>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">Categoría:</small>
+                                <span class="badge bg-info">{{ post.categoria.nombre }}</span>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">Creado:</small>
+                                <span class="small">{{ post.fecha_creacion|date:"d/m/Y" }}</span>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">Actualizado:</small>
+                                <span class="small">{{ post.fecha_actualizacion|date:"d/m/Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Acciones rápidas -->
+                    <div class="border-top pt-3 mt-3">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-lightning me-2"></i>Acciones Rápidas
+                        </h6>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'posts:detalle_post' post.id %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-2"></i>Ver publicación
+                            </a>
+                            <a href="{% url 'posts:mis_publicaciones' %}" 
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-journal-text me-2"></i>Mis lugares
+                            </a>
+                            <a href="{% url 'posts:eliminar_post' post.id %}" 
+                               class="btn btn-outline-danger btn-sm"
+                               onclick="return confirm('¿Estás seguro de eliminar este lugar? Esta acción no se puede deshacer.');">
+                                <i class="bi bi-trash me-2"></i>Eliminar lugar
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Consejos -->
+                    <div class="border-top pt-3 mt-3">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-lightbulb me-2"></i>Consejos
+                        </h6>
+                        <ul class="small text-muted mb-0">
+                            <li class="mb-2">Usa fotos de buena calidad</li>
+                            <li class="mb-2">Sé específico en la ubicación</li>
+                            <li class="mb-2">Incluye precios aproximados</li>
+                            <li>Menciona la mejor época para visitar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulario principal de edición -->
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3"
+                        style="width: 50px; height: 50px;">
+                        <i class="bi bi-pencil text-white fs-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="h4 fw-bold mb-1">Editar Lugar</h1>
+                        <nav aria-label="breadcrumb" class="small">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <a href="{% url 'index' %}" class="text-decoration-none">Inicio</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="{% url 'posts:mis_publicaciones' %}" class="text-decoration-none">Mis Lugares</a>
+                                </li>
+                                <li class="breadcrumb-item active">Editar: {{ post.titulo|truncatechars:25 }}</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'posts:agregar_post' %}" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Nuevo Lugar
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Formulario -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i>Editar información del lugar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Errores generales -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Información básica -->
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.titulo.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-geo me-1"></i>Nombre del Lugar *
+                                </label>
+                                <input type="text" 
+                                        name="{{ form.titulo.name }}" 
+                                        id="{{ form.titulo.id_for_label }}"
+                                        class="form-control {% if form.titulo.errors %}is-invalid{% endif %}"
+                                        value="{{ form.titulo.value|default:post.titulo }}"
+                                        placeholder="Ej: Playa Blanca, Costa Rica"
+                                        required>
+                                {% if form.titulo.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.titulo.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Un nombre claro y descriptivo.</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.categoria.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-tag me-1"></i>Tipo de Lugar *
+                                </label>
+                                <select name="{{ form.categoria.name }}" 
+                                        id="{{ form.categoria.id_for_label }}"
+                                        class="form-select {% if form.categoria.errors %}is-invalid{% endif %}"
+                                        required>
+                                    <option value="">Selecciona tipo</option>
+                                    {% for categoria in form.categoria.field.queryset %}
+                                    <option value="{{ categoria.id }}" 
+                                            {% if form.categoria.value == categoria.id or post.categoria.id == categoria.id %}selected{% endif %}>
+                                        {{ categoria.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.categoria.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.categoria.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Ubicación (campo personalizado si lo tienes) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-geo-alt me-1"></i>Ubicación
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" 
+                                            class="form-control" 
+                                            placeholder="País (ej: Costa Rica)"
+                                            value="{{ post.ubicacion_pais|default:'' }}"
+                                            name="ubicacion_pais">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" 
+                                            class="form-control" 
+                                            placeholder="Ciudad/Región (ej: Guanacaste)"
+                                            value="{{ post.ubicacion_ciudad|default:'' }}"
+                                            name="ubicacion_ciudad">
+                                </div>
+                            </div>
+                            <div class="form-text">Ayuda a otros viajeros a encontrar este lugar.</div>
+                        </div>
+                        
+                        <!-- Descripción corta -->
+                        <div class="mb-3">
+                            <label for="{{ form.resumen.id_for_label }}" class="form-label fw-semibold">
+                                <i class="bi bi-chat-square-text me-1"></i>Descripción Corta *
+                            </label>
+                            <textarea name="{{ form.resumen.name }}" 
+                                        id="{{ form.resumen.id_for_label }}"
+                                        class="form-control {% if form.resumen.errors %}is-invalid{% endif %}"
+                                        rows="3"
+                                        placeholder="Describe brevemente este lugar (aparece en la vista previa)"
+                                        required>{{ form.resumen.value|default:post.resumen }}</textarea>
+                            {% if form.resumen.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.resumen.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Máximo 200 caracteres. Captura la atención del lector.</div>
+                        </div>
+                        
+                        <!-- Experiencia completa -->
+                        <div class="mb-3">
+                            <label for="{{ form.contenido.id_for_label }}" class="form-label fw-semibold">
+                                <i class="bi bi-journal-text me-1"></i>Mi Experiencia *
+                            </label>
+                            <textarea name="{{ form.contenido.name }}" 
+                                    id="{{ form.contenido.id_for_label }}"
+                                    class="form-control {% if form.contenido.errors %}is-invalid{% endif %}"
+                                    rows="8"
+                                    placeholder="Comparte tu experiencia completa: cómo llegaste, qué hiciste, recomendaciones..."
+                                    required>{{ form.contenido.value|default:post.contenido }}</textarea>
+                            {% if form.contenido.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.contenido.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Puedes usar secciones como: Cómo llegar, Qué hacer, Dónde comer, Consejos, etc.
+                            </div>
+                        </div>
+                        
+                        <!-- Información práctica -->
+                        <div class="card border-0 bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>Información Práctica
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label small">Mejor época</label>
+                                        <input type="text" 
+                                            class="form-control form-control-sm" 
+                                            placeholder="Ej: Diciembre a Marzo"
+                                            value="{{ post.mejor_epoca|default:'' }}"
+                                            name="mejor_epoca">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label small">Precio aproximado</label>
+                                        <input type="text" 
+                                            class="form-control form-control-sm" 
+                                            placeholder="Ej: $50-100 por día"
+                                            value="{{ post.precio_aproximado|default:'' }}"
+                                            name="precio_aproximado">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label small">Dificultad</label>
+                                        <select class="form-select form-select-sm" name="dificultad">
+                                            <option value="">Seleccionar</option>
+                                            <option value="facil" {% if post.dificultad == 'facil' %}selected{% endif %}>Fácil</option>
+                                            <option value="moderado" {% if post.dificultad == 'moderado' %}selected{% endif %}>Moderado</option>
+                                            <option value="dificil" {% if post.dificultad == 'dificil' %}selected{% endif %}>Difícil</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Imagen del lugar -->
+                        <div class="mb-4">
+                            <label for="{{ form.imagen.id_for_label }}" class="form-label fw-semibold">
+                                <i class="bi bi-camera me-1"></i>Foto del Lugar
+                            </label>
+                            
+                            <!-- Imagen actual -->
+                            {% if post.imagen %}
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <p class="text-muted small mb-0">Imagen actual:</p>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                            name="eliminar_imagen" id="eliminar_imagen">
+                                        <label class="form-check-label small text-danger" for="eliminar_imagen">
+                                            <i class="bi bi-trash me-1"></i>Eliminar
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="position-relative" style="max-width: 300px;">
+                                    <img src="{{ post.imagen.url }}" 
+                                        alt="{{ post.titulo }}" 
+                                        class="img-fluid rounded border shadow-sm">
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        <span class="badge bg-dark">{{ post.imagen.size|filesizeformat }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Nuevo campo de imagen -->
+                            <div class="mt-3">
+                                <label class="form-label small">Subir nueva imagen</label>
+                                <input type="file" 
+                                    name="{{ form.imagen.name }}" 
+                                    id="{{ form.imagen.id_for_label }}"
+                                    class="form-control {% if form.imagen.errors %}is-invalid{% endif %}"
+                                    accept="image/*">
+                                {% if form.imagen.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.imagen.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Tamaño recomendado: 1200x800px. Máximo 5MB.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Estado y visibilidad -->
+                        <div class="card border-0 bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-eye me-2"></i>Visibilidad
+                                </h6>
+                                <div class="row align-items-center">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="{{ form.estado.id_for_label }}" class="form-label fw-semibold">
+                                            Estado actual
+                                        </label>
+                                        <select name="{{ form.estado.name }}" 
+                                                id="{{ form.estado.id_for_label }}"
+                                                class="form-select {% if form.estado.errors %}is-invalid{% endif %}">
+                                            {% for choice in form.estado.field.choices %}
+                                            <option value="{{ choice.0 }}" 
+                                                    {% if form.estado.value == choice.0 or post.estado == choice.0 %}selected{% endif %}>
+                                                {{ choice.1 }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert {% if post.estado == 'publicado' %}alert-success{% else %}alert-secondary{% endif %} mb-0">
+                                            <i class="bi {% if post.estado == 'publicado' %}bi-eye{% else %}bi-eye-slash{% endif %} me-2"></i>
+                                            {% if post.estado == 'publicado' %}
+                                            Este lugar es visible para todos.
+                                            {% else %}
+                                            Solo tú puedes ver este lugar.
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                            <div>
+                                <a href="{% url 'posts:detalle_post' post.id %}" 
+                                    class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Cancelar
+                                </a>
+                            </div>
+                            <a href="?refresh=true" class="btn btn-sm btn-outline-warning" 
+                                title="Actualizar datos">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="submit" name="guardar_borrador" value="true" 
+                                        class="btn btn-secondary">
+                                    <i class="bi bi-save me-2"></i>Guardar borrador
+                                </button>
+                                <button type="submit" name="publicar" value="true" 
+                                        class="btn btn-warning">
+                                    <i class="bi bi-check-circle me-2"></i>Actualizar lugar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Vista previa rápida -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-eye me-2"></i>Vista Previa Rápida
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                                style="height: 150px;">
+                                <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 id="vista-titulo" class="fw-bold">{{ post.titulo|truncatechars:50 }}</h6>
+                            <p id="vista-resumen" class="small text-muted mb-2">
+                                {{ post.resumen|truncatechars:150|default:"Descripción del lugar..." }}
+                            </p>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-info" id="vista-categoria">{{ post.categoria.nombre }}</span>
+                                <span class="badge bg-secondary" id="vista-estado">{{ post.get_estado_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .invalid-feedback {
+        display: block;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+    
+    .card {
+        border-radius: 12px;
+    }
+    
+    .sticky-top {
+        z-index: 1;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contador de caracteres
+    const contadores = {
+        '{{ form.titulo.id_for_label }}': 100,
+        '{{ form.resumen.id_for_label }}': 200
+    };
+    
+    for (const [id, max] of Object.entries(contadores)) {
+        const elemento = document.getElementById(id);
+        if (elemento) {
+            const contador = document.createElement('small');
+            contador.className = 'form-text text-end d-block mt-1';
+            elemento.parentNode.insertBefore(contador, elemento.nextSibling);
+            
+            function actualizarContador() {
+                const longitud = elemento.value.length;
+                contador.textContent = `${longitud}/${max} caracteres`;
+                contador.classList.toggle('text-danger', longitud > max);
+            }
+            
+            elemento.addEventListener('input', actualizarContador);
+            actualizarContador();
+        }
+    }
+    
+    // Vista previa en tiempo real
+    const tituloInput = document.getElementById('{{ form.titulo.id_for_label }}');
+    const resumenInput = document.getElementById('{{ form.resumen.id_for_label }}');
+    const categoriaSelect = document.getElementById('{{ form.categoria.id_for_label }}');
+    
+    function actualizarVistaPrevia() {
+        document.getElementById('vista-titulo').textContent = 
+            tituloInput.value || '{{ post.titulo|truncatechars:50 }}';
+        document.getElementById('vista-resumen').textContent = 
+            resumenInput.value || '{{ post.resumen|truncatechars:150|default:"Descripción del lugar..." }}';
+        
+        if (categoriaSelect.value) {
+            const categoriaText = categoriaSelect.options[categoriaSelect.selectedIndex].text;
+            document.getElementById('vista-categoria').textContent = categoriaText;
+        }
+    }
+    
+    tituloInput.addEventListener('input', actualizarVistaPrevia);
+    resumenInput.addEventListener('input', actualizarVistaPrevia);
+    categoriaSelect.addEventListener('change', actualizarVistaPrevia);
+    actualizarVistaPrevia();
+    
+    // Alertas de estado
+    const estadoSelect = document.getElementById('{{ form.estado.id_for_label }}');
+    const estadoAlert = document.querySelector('.alert[class*="alert-"]');
+    
+    estadoSelect.addEventListener('change', function() {
+        if (this.value === 'publicado') {
+            estadoAlert.className = 'alert alert-success mb-0';
+            estadoAlert.innerHTML = '<i class="bi bi-eye me-2"></i>Este lugar será visible para todos.';
+            document.getElementById('vista-estado').textContent = 'Publicado';
+            document.getElementById('vista-estado').className = 'badge bg-success';
+        } else {
+            estadoAlert.className = 'alert alert-secondary mb-0';
+            estadoAlert.innerHTML = '<i class="bi bi-eye-slash me-2"></i>Solo tú puedes ver este lugar.';
+            document.getElementById('vista-estado').textContent = 'Borrador';
+            document.getElementById('vista-estado').className = 'badge bg-secondary';
+        }
+    });
+    
+    // Validación de formulario
+    const formulario = document.querySelector('form');
+    formulario.addEventListener('submit', function(e) {
+        const titulo = tituloInput.value.trim();
+        const resumen = resumenInput.value.trim();
+        const contenido = document.getElementById('{{ form.contenido.id_for_label }}').value.trim();
+        const categoria = categoriaSelect.value;
+        
+        let errores = [];
+        
+        if (!titulo) errores.push('El nombre del lugar es obligatorio.');
+        if (titulo.length > 100) errores.push('El título no puede exceder 100 caracteres.');
+        if (!resumen) errores.push('La descripción corta es obligatoria.');
+        if (resumen.length > 200) errores.push('La descripción corta no puede exceder 200 caracteres.');
+        if (!contenido) errores.push('La experiencia completa es obligatoria.');
+        if (!categoria) errores.push('Debes seleccionar un tipo de lugar.');
+        
+        if (errores.length > 0) {
+            e.preventDefault();
+            alert('Por favor corrige los siguientes errores:\n\n' + errores.join('\n'));
+        }
+    });
+});
+</script>
+{% endblock %}

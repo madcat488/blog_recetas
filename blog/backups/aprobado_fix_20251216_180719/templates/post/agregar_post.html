@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Nuevo Viaje - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3"
+                     style="width: 50px; height: 50px;">
+                    <i class="bi bi-plus-circle text-white fs-5"></i>
+                </div>
+                <div>
+                    <h1 class="h4 fw-bold mb-1">Comparte tu Viaje</h1>
+                    <p class="text-muted small mb-0">Completa toda la información para ayudar a otros viajeros</p>
+                </div>
+            </div>
+            
+            <!-- Formulario -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i>Nueva Publicación
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="form-post">
+                        {% csrf_token %}
+                        
+                        <!-- Información Básica -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="fw-bold border-bottom pb-2 mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>Información Básica
+                                </h6>
+                            </div>
+                            
+                            <!-- Título -->
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.titulo.id_for_label }}" class="form-label fw-semibold">
+                                    Título del viaje *
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.titulo.name }}" 
+                                       id="id_titulo"
+                                       class="form-control"
+                                       value="{{ form.titulo.value|default:'' }}"
+                                       placeholder="Ej: Aventura en las montañas de Perú"
+                                       required
+                                       maxlength="200">
+                                <small class="form-text text-muted">Un título atractivo y descriptivo</small>
+                                <div id="contador-titulo" class="form-text text-end">0/200</div>
+                            </div>
+                            
+                            <!-- Categoría -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.categoria.id_for_label }}" class="form-label fw-semibold">
+                                    Categoría *
+                                </label>
+                                {{ form.categoria }}
+                            </div>
+                            
+                            <!-- Descripción Corta -->
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.resumen.id_for_label }}" class="form-label fw-semibold">
+                                    Descripción corta *
+                                </label>
+                                <textarea name="{{ form.resumen.name }}" 
+                                          id="id_resumen"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="Describe brevemente tu experiencia (máx. 300 caracteres)"
+                                          required
+                                          maxlength="300">{{ form.resumen.value|default:'' }}</textarea>
+                                <small class="form-text text-muted">Aparece en la vista previa de la publicación</small>
+                                <div id="contador-resumen" class="form-text text-end">0/300</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información Práctica -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="fw-bold border-bottom pb-2 mb-3">
+                                    <i class="bi bi-geo-alt me-2"></i>Información Práctica
+                                </h6>
+                            </div>
+                            
+                            <!-- Ubicación -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.ubicacion_pais.id_for_label }}" class="form-label">
+                                    País
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.ubicacion_pais.name }}" 
+                                       id="id_ubicacion_pais"
+                                       class="form-control"
+                                       value="{{ form.ubicacion_pais.value|default:'' }}"
+                                       placeholder="Ej: Perú">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.ubicacion_ciudad.id_for_label }}" class="form-label">
+                                    Ciudad/Región
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.ubicacion_ciudad.name }}" 
+                                       id="id_ubicacion_ciudad"
+                                       class="form-control"
+                                       value="{{ form.ubicacion_ciudad.value|default:'' }}"
+                                       placeholder="Ej: Cusco">
+                            </div>
+                            
+                            <!-- Información adicional -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.mejor_epoca.id_for_label }}" class="form-label">
+                                    Mejor época
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.mejor_epoca.name }}" 
+                                       id="id_mejor_epoca"
+                                       class="form-control"
+                                       value="{{ form.mejor_epoca.value|default:'' }}"
+                                       placeholder="Ej: Mayo a Septiembre">
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.precio_aproximado.id_for_label }}" class="form-label">
+                                    Precio aproximado
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.precio_aproximado.name }}" 
+                                       id="id_precio_aproximado"
+                                       class="form-control"
+                                       value="{{ form.precio_aproximado.value|default:'' }}"
+                                       placeholder="Ej: $500-800">
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.dificultad.id_for_label }}" class="form-label">
+                                    Dificultad
+                                </label>
+                                {{ form.dificultad }}
+                            </div>
+                            
+                            <!-- Duración y palabras clave -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.duracia_recomendada.id_for_label }}" class="form-label">
+                                    Duración recomendada
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.duracia_recomendada.name }}" 
+                                       id="id_duracia_recomendada"
+                                       class="form-control"
+                                       value="{{ form.duracia_recomendada.value|default:'' }}"
+                                       placeholder="Ej: 5-7 días">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.palabras_clave.id_for_label }}" class="form-label">
+                                    Palabras clave
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.palabras_clave.name }}" 
+                                       id="id_palabras_clave"
+                                       class="form-control"
+                                       value="{{ form.palabras_clave.value|default:'' }}"
+                                       placeholder="Ej: montaña, trekking, cultura">
+                                <small class="form-text text-muted">Separadas por comas</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Contenido Completo -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="fw-bold border-bottom pb-2 mb-3">
+                                    <i class="bi bi-journal-text me-2"></i>Tu Experiencia Completa
+                                </h6>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.contenido.id_for_label }}" class="form-label fw-semibold">
+                                    Relato del viaje *
+                                </label>
+                                <textarea name="{{ form.contenido.name }}" 
+                                          id="id_contenido"
+                                          class="form-control"
+                                          rows="12"
+                                          placeholder="Comparte tu experiencia completa: cómo planificaste el viaje, transporte, alojamiento, actividades, recomendaciones, consejos..."
+                                          required>{{ form.contenido.value|default:'' }}</textarea>
+                                <small class="form-text text-muted">
+                                    Puedes organizarlo en secciones: Itinerario, Transporte, Alojamiento, Qué ver/hacer, Gastronomía, Consejos, etc.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- Multimedia y Configuración -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <h6 class="fw-bold border-bottom pb-2 mb-3">
+                                    <i class="bi bi-camera me-2"></i>Multimedia
+                                </h6>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.imagen.id_for_label }}" class="form-label">
+                                        Imagen principal
+                                    </label>
+                                    {{ form.imagen }}
+                                    <small class="form-text text-muted">
+                                        Tamaño recomendado: 1200x800px. Formatos: JPG, PNG, WebP
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <h6 class="fw-bold border-bottom pb-2 mb-3">
+                                    <i class="bi bi-gear me-2"></i>Configuración
+                                </h6>
+                                
+                                <!-- Estado -->
+                                <div class="mb-3">
+                                    <label for="{{ form.estado.id_for_label }}" class="form-label">
+                                        Estado de publicación
+                                    </label>
+                                    {{ form.estado }}
+                                    <div id="info-estado" class="mt-2 small"></div>
+                                </div>
+                                
+                                <!-- Visibilidad -->
+                                <div class="mb-3">
+                                    <label for="{{ form.visibilidad.id_for_label }}" class="form-label">
+                                        Visibilidad
+                                    </label>
+                                    {{ form.visibilidad }}
+                                    <div id="info-visibilidad" class="mt-2 small"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancelar
+                            </a>
+                            <a href="?refresh=true" class="btn btn-sm btn-outline-warning" 
+                                title="Actualizar datos">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="submit" name="accion" value="borrador" class="btn btn-secondary">
+                                    <i class="bi bi-save me-2"></i>Guardar borrador
+                                </button>
+                                <button type="submit" name="accion" value="revision" class="btn btn-info">
+                                    <i class="bi bi-send-check me-2"></i>Enviar a revisión
+                                </button>
+                                {% if user.is_staff or user.is_superuser %}
+                                <button type="submit" name="accion" value="publicar" class="btn btn-warning">
+                                    <i class="bi bi-check-circle me-2"></i>Publicar ahora
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+    }
+    
+    .border-bottom {
+        border-color: #dee2e6 !important;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contadores de caracteres
+    const titulo = document.getElementById('id_titulo');
+    const resumen = document.getElementById('id_resumen');
+    
+    function actualizarContador(elemento, contadorId, max) {
+        const contador = document.getElementById(contadorId);
+        const longitud = elemento.value.length;
+        contador.textContent = `${longitud}/${max}`;
+        contador.className = `form-text text-end ${longitud > max ? 'text-danger' : 'text-muted'}`;
+    }
+    
+    if (titulo) {
+        titulo.addEventListener('input', () => actualizarContador(titulo, 'contador-titulo', 200));
+        actualizarContador(titulo, 'contador-titulo', 200);
+    }
+    
+    if (resumen) {
+        resumen.addEventListener('input', () => actualizarContador(resumen, 'contador-resumen', 300));
+        actualizarContador(resumen, 'contador-resumen', 300);
+    }
+    
+    // Información sobre estado
+    const estadoSelect = document.getElementById('{{ form.estado.id_for_label }}');
+    const infoEstado = document.getElementById('info-estado');
+    
+    function actualizarInfoEstado() {
+        const estado = estadoSelect.value;
+        let info = '';
+        let clase = '';
+        
+        switch(estado) {
+            case 'borrador':
+                info = '<i class="bi bi-eye-slash me-1"></i>Solo tú puedes ver esta publicación.';
+                clase = 'alert alert-secondary';
+                break;
+            case 'revision':
+                info = '<i class="bi bi-clock me-1"></i>Esperando aprobación del equipo editorial.';
+                clase = 'alert alert-info';
+                break;
+            case 'publicado':
+                info = '<i class="bi bi-eye me-1"></i>Visible para todos los usuarios.';
+                clase = 'alert alert-success';
+                break;
+            case 'archivado':
+                info = '<i class="bi bi-archive me-1"></i>Publicación archivada, no visible públicamente.';
+                clase = 'alert alert-dark';
+                break;
+        }
+        
+        infoEstado.innerHTML = `<div class="${clase} p-2 small mb-0">${info}</div>`;
+    }
+    
+    if (estadoSelect) {
+        estadoSelect.addEventListener('change', actualizarInfoEstado);
+        actualizarInfoEstado();
+    }
+    
+    // Información sobre visibilidad
+    const visibilidadSelect = document.getElementById('{{ form.visibilidad.id_for_label }}');
+    const infoVisibilidad = document.getElementById('info-visibilidad');
+    
+    function actualizarInfoVisibilidad() {
+        const visibilidad = visibilidadSelect.value;
+        let info = '';
+        let clase = '';
+        
+        switch(visibilidad) {
+            case 'publico':
+                info = '<i class="bi bi-globe me-1"></i>Cualquier usuario puede ver esta publicación.';
+                clase = 'alert alert-success';
+                break;
+            case 'privado':
+                info = '<i class="bi bi-lock me-1"></i>Solo tú puedes ver esta publicación.';
+                clase = 'alert alert-secondary';
+                break;
+            case 'solo_colaboradores':
+                info = '<i class="bi bi-people me-1"></i>Solo colaboradores y equipo editorial pueden ver esta publicación.';
+                clase = 'alert alert-info';
+                break;
+        }
+        
+        infoVisibilidad.innerHTML = `<div class="${clase} p-2 small mb-0">${info}</div>`;
+    }
+    
+    if (visibilidadSelect) {
+        visibilidadSelect.addEventListener('change', actualizarInfoVisibilidad);
+        actualizarInfoVisibilidad();
+    }
+    
+    // Manejar el envío del formulario según el botón presionado
+    const form = document.getElementById('form-post');
+    const botones = form.querySelectorAll('button[type="submit"]');
+    
+    botones.forEach(boton => {
+        boton.addEventListener('click', function(e) {
+            // Eliminar cualquier input oculto anterior
+            const inputOculto = form.querySelector('input[name="accion"]');
+            if (inputOculto) inputOculto.remove();
+            
+            // Crear un input oculto con el valor del botón
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'accion';
+            input.value = this.value;
+            form.appendChild(input);
+        });
+    });
+    
+    // Validación del formulario
+    form.addEventListener('submit', function(e) {
+        const tituloValor = titulo.value.trim();
+        const resumenValor = resumen.value.trim();
+        const contenidoValor = document.getElementById('id_contenido').value.trim();
+        const categoriaValor = document.getElementById('{{ form.categoria.id_for_label }}').value;
+        
+        let errores = [];
+        
+        if (!tituloValor) errores.push('El título es obligatorio.');
+        if (tituloValor.length > 200) errores.push('El título no puede exceder 200 caracteres.');
+        if (!resumenValor) errores.push('La descripción corta es obligatoria.');
+        if (resumenValor.length > 300) errores.push('La descripción corta no puede exceder 300 caracteres.');
+        if (!contenidoValor) errores.push('El contenido completo es obligatorio.');
+        if (!categoriaValor) errores.push('Debes seleccionar una categoría.');
+        
+        if (errores.length > 0) {
+            e.preventDefault();
+            alert('Por favor corrige los siguientes errores:\n\n' + errores.join('\n'));
+        }
+    });
+});
+</script>
+{% endblock %}

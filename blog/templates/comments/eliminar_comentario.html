@@ -1,0 +1,48 @@
+<!-- templates/comments/eliminar_comentario.html -->
+{% extends 'base.html' %}
+{% load posts_extras %}
+{% load user_tags %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-trash me-2"></i>
+                        Eliminar Comentario
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle text-danger display-4 mb-3"></i>
+                    <h5 class="mb-3">¿Estás seguro de eliminar este comentario?</h5>
+                    
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <p class="mb-2"><strong>Autor:</strong> {{ object.autor }}</p>
+                            <p class="mb-2"><strong>Fecha:</strong> {{ object.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                            <p class="mb-0"><strong>Contenido:</strong> {{ object.contenido|truncatechars:100 }}</p>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'posts:detalle_post' object.post.id %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-2"></i>
+                                Sí, Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

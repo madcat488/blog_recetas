@@ -1,0 +1,511 @@
+{% load static %}
+{% load user_tags %}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 fixed-top">
+    <div class="container">
+        <!-- LOGO -->
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
+            <img src="{% static 'img/logo.png' %}" alt="logo" width="45" class="me-2">
+            <span class="fw-bold" style="font-family: 'Poppins', sans-serif; font-size: 1.3rem;">
+                Blog de Viajes
+            </span>
+        </a>
+
+        <!-- Botón menú móvil -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menú principal -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Navegación izquierda - PARA TODOS LOS USUARIOS -->
+            <ul class="navbar-nav me-auto">
+                <!-- Inicio -->
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold" href="{% url 'index' %}">
+                        <i class="bi bi-house-door me-1"></i>Inicio
+                    </a>
+                </li>
+                
+                <!-- Viajes dropdown - VISIBLE PARA TODOS -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-semibold d-flex align-items-center" href="#" 
+                       role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-compass me-1"></i>Viajes
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="{% url 'posts:listar_posts' %}">
+                                <i class="bi bi-grid-3x3-gap me-2"></i>Ver todos los viajes
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header">Categorías</li>
+                        {% if categorias %}
+                            {% for categoria in categorias %}
+                                {% if categoria.nombre and categoria.nombre.strip %}
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" 
+                                       href="{% url 'posts:listar_por_categoria' categoria.nombre %}">
+                                        <i class="bi bi-tag me-2"></i>{{ categoria.nombre }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <li><a class="dropdown-item text-muted" href="#">No hay categorías</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                
+                <!-- Mis viajes - Solo para usuarios autenticados -->
+                {% if user.is_authenticated and user|puede_crear_post %}
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold d-flex align-items-center" 
+                       href="{% url 'posts:mis_publicaciones' %}">
+                        <i class="bi bi-bookmark-heart me-1"></i>Mis viajes
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- SECCIÓN DE ADMINISTRACIÓN - SOLO PARA COLABORADORES/STAFF/ADMIN -->
+                {% if user.is_authenticated and user|puede_crear_post %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-semibold d-flex align-items-center text-warning" 
+                       href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-gear me-1"></i>Administrar
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-header text-uppercase">
+                            <i class="bi bi-shield-check me-1"></i>Panel de Colaborador
+                        </li>
+                        
+                        <!-- Solo staff/superuser pueden crear categorías -->
+                        {% if user.is_authenticated and user|puede_crear_post %}
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="{% url 'posts:agregar_categoria' %}">
+                                <i class="bi bi-tag-plus me-2"></i>Nueva categoría
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Todos los colaboradores/staff pueden crear viajes -->
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="{% url 'posts:agregar_post' %}">
+                                <i class="bi bi-file-earmark-plus me-2"></i>Nuevo viaje
+                            </a>
+                        </li>
+                        
+                        <!-- Opciones adicionales para staff/admin -->
+                        {% if user.is_authenticated and user|puede_crear_post %}
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="{% url 'posts:mis_publicaciones' %}">
+                                <i class="bi bi-list-check me-2"></i>Mis publicaciones
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if user.is_superuser %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header text-uppercase">
+                            <i class="bi bi-shield-lock me-1"></i>Super Administración
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center text-danger" 
+                               href="/admin/" target="_blank">
+                                <i class="bi bi-terminal me-2"></i>Panel Django Admin
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
+            </ul> <!-- Cierra el primer ul -->
+            
+            <!-- Barra de búsqueda - EN EL MEDIO -->
+            <form class="d-flex me-3" action="{% url 'posts:listar_posts' %}" method="GET">
+                <div class="input-group" style="width: 280px;">
+                    <input type="text" class="form-control form-control-sm" 
+                           placeholder="Buscar viajes..." name="buscador"
+                           value="{{ request.GET.buscador|default:'' }}">
+                    <button class="btn btn-outline-warning" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    {% if request.GET.buscador %}
+                    <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                        <i class="bi bi-x"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+            
+            <!-- Perfil - A LA DERECHA -->
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <!-- Usuario autenticado -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                       role="button" data-bs-toggle="dropdown">
+                        {% if user.imagen %}
+                        <img src="{{ user.imagen.url }}" width="32" height="32" 
+                             class="rounded-circle me-2 border object-fit-cover"
+                             alt="{{ user.username }}">
+                        {% else %}
+                        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2" 
+                             style="width: 32px; height: 32px;">
+                            <i class="bi bi-person text-white"></i>
+                        </div>
+                        {% endif %}
+                        <span class="fw-semibold">{{ user.username|truncatechars:12 }}</span>
+                        
+                        <!-- Badge de rol -->
+                        {% if user.is_superuser %}
+                        <span class="badge bg-danger ms-2">Admin</span>
+                        {% elif user.is_staff %}
+                        <span class="badge bg-warning ms-2">Staff</span>
+                        {% elif user|puede_crear_post %}
+                        <span class="badge bg-info ms-2">Colab</span>
+                        {% endif %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">Mi cuenta</li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="{% url 'usuarios:perfil' %}">
+                                <i class="bi bi-person-circle me-2"></i>Mi perfil
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="{% url 'posts:mis_publicaciones' %}">
+                                <i class="bi bi-bookmark-heart me-2"></i>Mis viajes guardados
+                            </a>
+                        </li>
+                        
+                        <!-- Solo para colaboradores/staff/admin -->
+                        {% if user.is_authenticated and user|puede_crear_post %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header">Mis contribuciones</li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="{% url 'posts:mis_publicaciones' %}">
+                                <i class="bi bi-file-text me-2"></i>Mis publicaciones
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center text-danger" 
+                               href="{% url 'usuarios:cerrar_sesion' %}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {% else %}
+                <!-- Usuario NO autenticado -->
+                <li class="nav-item">
+                    <a class="btn btn-outline-warning btn-sm me-2" 
+                       href="{% url 'usuarios:login' %}">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-warning btn-sm" 
+                       href="{% url 'usuarios:registrar' %}">
+                        <i class="bi bi-person-plus me-1"></i>Registrarse
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Estilos mejorados -->
+<style>
+    .navbar {
+        backdrop-filter: blur(10px);
+        background-color: rgba(255, 255, 255, 0.98) !important;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .nav-link {
+        color: #333 !important;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem !important;
+        position: relative;
+    }
+    
+    .nav-link:hover {
+        color: #ffc107 !important;
+        transform: translateY(-1px);
+    }
+    
+    .nav-link.text-warning {
+        color: #ffc107 !important;
+        font-weight: 600;
+    }
+    
+    /* Indicador visual de rol activo */
+    .nav-item.dropdown .nav-link.text-warning::before {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 1rem;
+        right: 1rem;
+        height: 2px;
+        background-color: #ffc107;
+        border-radius: 2px;
+        opacity: 0.7;
+    }
+    
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        padding: 0.5rem 0;
+        min-width: 240px;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .dropdown-item {
+        padding: 0.6rem 1.5rem;
+        transition: all 0.2s ease;
+        border-radius: 8px;
+        margin: 0.1rem 0.5rem;
+        width: calc(100% - 1rem);
+    }
+    
+    .dropdown-item:hover {
+        background-color: rgba(255, 193, 7, 0.15);
+        transform: translateX(3px);
+    }
+    
+    .dropdown-header {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #6c757d;
+        padding: 0.5rem 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+    
+    .dropdown-header:first-child {
+        margin-top: 0;
+    }
+    
+    .badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.5rem;
+        font-weight: 500;
+    }
+    
+    .input-group {
+        width: 280px;
+        transition: all 0.3s ease;
+    }
+    
+    .input-group:focus-within {
+        width: 320px;
+    }
+    
+    .input-group .form-control {
+        border-radius: 20px 0 0 20px;
+        border-color: #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .input-group .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    }
+    
+    .input-group .btn {
+        border-radius: 0 20px 20px 0;
+    }
+    
+    .input-group .btn-outline-secondary {
+        border-radius: 0 20px 20px 0;
+        margin-left: -1px;
+    }
+    
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .input-group {
+            width: 100% !important;
+            margin: 1rem 0;
+        }
+        
+        .input-group:focus-within {
+            width: 100% !important;
+        }
+        
+        .navbar-nav {
+            width: 100%;
+        }
+        
+        .nav-item .btn {
+            width: 100%;
+            margin: 0.25rem 0;
+        }
+        
+        .nav-link.text-warning::before {
+            display: none;
+        }
+        
+        .d-flex.me-3 {
+            order: 2;
+            margin: 1rem 0;
+        }
+        
+        .navbar-nav:last-child {
+            order: 3;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .navbar-brand span {
+            font-size: 1.1rem;
+        }
+        
+        .navbar-nav .badge {
+            display: inline-block;
+        }
+        
+        .input-group {
+            margin: 0.5rem 0;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .navbar-nav .badge {
+            display: none;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+    
+    /* Animación para el dropdown */
+    .dropdown-menu {
+        animation: fadeInDown 0.2s ease;
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Estilo para enlaces activos */
+    .nav-link.active {
+        color: #ffc107 !important;
+        font-weight: 600;
+    }
+    
+    .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 1rem;
+        right: 1rem;
+        height: 2px;
+        background-color: #ffc107;
+        border-radius: 2px;
+    }
+</style>
+
+<!-- Script mejorado -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus en buscador (solo en desktop)
+    const buscador = document.querySelector('input[name="buscador"]');
+    if (buscador && window.innerWidth > 768) {
+        // Restaurar búsqueda anterior si existe
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('buscador')) {
+            buscador.value = urlParams.get('buscador');
+        }
+        
+        // Focus automático después de 500ms
+        setTimeout(() => {
+            buscador.focus();
+            // Mover cursor al final del texto
+            buscador.setSelectionRange(buscador.value.length, buscador.value.length);
+        }, 500);
+    }
+    
+    // Indicador visual de página activa
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.nav-link[href]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPath || 
+            (href !== '/' && currentPath.startsWith(href) && href !== '#')) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Tooltips para badges de rol
+    const badges = document.querySelectorAll('.badge');
+    badges.forEach(badge => {
+        badge.setAttribute('title', badge.textContent + ' - ' + 
+            (badge.classList.contains('bg-danger') ? 'Administrador' : 
+             badge.classList.contains('bg-warning') ? 'Staff' : 
+             'Colaborador'));
+        badge.setAttribute('data-bs-toggle', 'tooltip');
+        badge.setAttribute('data-bs-placement', 'bottom');
+    });
+    
+    // Inicializar tooltips de Bootstrap
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+    
+    // Efecto hover en la barra de búsqueda
+    const inputGroup = document.querySelector('.input-group');
+    if (inputGroup) {
+        inputGroup.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+        });
+        
+        inputGroup.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+    
+    // Limpiar búsqueda con Escape
+    if (buscador) {
+        buscador.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                this.focus();
+            }
+        });
+    }
+});
+</script>

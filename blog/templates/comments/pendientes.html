@@ -1,0 +1,295 @@
+<!-- templates/comments/pendientes.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load posts_extras %}
+{% load user_tags %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-2">
+                <i class="bi bi-chat-left-text me-2"></i>
+                Comentarios Pendientes
+            </h1>
+            <p class="text-muted mb-0">
+                {% if total_pendientes == 0 %}
+                No hay comentarios pendientes de moderación.
+                {% else %}
+                {{ total_pendientes }} comentario{{ total_pendientes|pluralize:"s" }} pendiente{{ total_pendientes|pluralize:"s" }}
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Volver a Publicaciones
+            </a>
+        </div>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h2 class="display-4 fw-bold text-warning">{{ total_pendientes }}</h2>
+                    <p class="mb-0">Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <h2 class="display-4 fw-bold text-success">{{ total_aprobados }}</h2>
+                    <p class="mb-0">Aprobados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-danger bg-opacity-10">
+                <div class="card-body text-center">
+                    <h2 class="display-4 fw-bold text-danger">{{ total_rechazados }}</h2>
+                    <p class="mb-0">Rechazados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if comentarios %}
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="50%">Comentario</th>
+                        <th>Publicación</th>
+                        <th>Autor</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comentario in comentarios %}
+                    <tr id="comentario-{{ comentario.id }}">
+                        <td>
+                            <div class="d-flex align-items-start">
+                                <div class="flex-grow-1">
+                                    <p class="mb-1">{{ comentario.contenido|truncatechars:150 }}</p>
+                                    <small class="text-muted">
+                                        {% if comentario.contenido|length > 150 %}
+                                        <a href="#" class="text-decoration-none" 
+                                           data-bs-toggle="modal" 
+                                           data-bs-target="#modalComentario{{ comentario.id }}">
+                                            Ver completo
+                                        </a>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal para ver comentario completo -->
+                            <div class="modal fade" id="modalComentario{{ comentario.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Comentario completo</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>{{ comentario.contenido|linebreaks }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{% url 'posts:detalle_post' comentario.post.id %}" 
+                               class="text-decoration-none" target="_blank">
+                                {{ comentario.post.titulo|truncatechars:30 }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-circle me-2"></i>
+                                <span>{{ comentario.autor }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ comentario.fecha_creacion|date:"d/m/Y" }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" 
+                                        class="btn btn-outline-success aprobar-rapido"
+                                        data-comentario-id="{{ comentario.id }}"
+                                        title="Aprobar">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                
+                                <button type="button" 
+                                        class="btn btn-outline-danger rechazar-rapido"
+                                        data-comentario-id="{{ comentario.id }}"
+                                        title="Rechazar">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                
+                                <a href="{% url 'comments:moderar_comentario' comentario.id %}" 
+                                   class="btn btn-outline-warning"
+                                   title="Moderar detalladamente">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for i in paginator.page_range %}
+            <li class="page-item {% if page_obj.number == i %}active{% endif %}">
+                <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+            </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-check-circle display-1 text-success mb-3"></i>
+        <h3 class="text-success mb-3">¡Todo al día!</h3>
+        <p class="text-muted">No hay comentarios pendientes de moderación.</p>
+        <a href="{% url 'posts:listar_posts' %}" class="btn btn-warning">
+            <i class="bi bi-arrow-left me-2"></i>
+            Volver a Publicaciones
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Aprobar rápido
+    document.querySelectorAll('.aprobar-rapido').forEach(button => {
+        button.addEventListener('click', function() {
+            const comentarioId = this.dataset.comentarioId;
+            const fila = document.getElementById(`comentario-${comentarioId}`);
+            
+            fetch(`/comentarios/aprobar-rapido/${comentarioId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Animación de éxito y remover
+                    fila.classList.add('table-success');
+                    setTimeout(() => {
+                        fila.remove();
+                        // Actualizar contador si existe
+                        const contador = document.querySelector('.badge.bg-warning');
+                        if (contador) {
+                            let count = parseInt(contador.textContent);
+                            if (count > 0) {
+                                contador.textContent = count - 1;
+                            }
+                        }
+                    }, 500);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al aprobar el comentario');
+            });
+        });
+    });
+    
+    // Rechazar rápido
+    document.querySelectorAll('.rechazar-rapido').forEach(button => {
+        button.addEventListener('click', function() {
+            if (!confirm('¿Estás seguro de rechazar este comentario?')) {
+                return;
+            }
+            
+            const comentarioId = this.dataset.comentarioId;
+            const fila = document.getElementById(`comentario-${comentarioId}`);
+            
+            fetch(`/comentarios/rechazar-rapido/${comentarioId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Animación de rechazo y remover
+                    fila.classList.add('table-danger');
+                    setTimeout(() => {
+                        fila.remove();
+                        // Actualizar contador si existe
+                        const contador = document.querySelector('.badge.bg-warning');
+                        if (contador) {
+                            let count = parseInt(contador.textContent);
+                            if (count > 0) {
+                                contador.textContent = count - 1;
+                            }
+                        }
+                    }, 500);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al rechazar el comentario');
+            });
+        });
+    });
+    
+    // Función para obtener cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<div class="container py-5 text-center">
+    <div class="alert alert-success">
+        <h4 class="alert-heading">¡Perfil actualizado correctamente!</h4>
+        <p>Tu información de perfil ha sido actualizada exitosamente.</p>
+        <hr>
+        <a href="{% url 'usuarios:perfil' %}" class="btn btn-success">Volver a mi perfil</a>
+    </div>
+</div>
+{% endblock %}

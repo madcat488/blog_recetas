@@ -1,0 +1,113 @@
+<!-- templates/comments/moderar_comentario.html -->
+{% extends 'base.html' %}
+
+{% block contenido %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Moderar Comentario
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Información del comentario -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Información del comentario
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <small class="text-muted d-block">Autor:</small>
+                                    <strong>{{ comentario.autor }}</strong>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <small class="text-muted d-block">Fecha:</small>
+                                    <strong>{{ comentario.fecha_creacion|date:"d/m/Y H:i" }}</strong>
+                                </div>
+                                <div class="col-12 mb-2">
+                                    <small class="text-muted d-block">Publicación:</small>
+                                    <a href="{% url 'posts:detalle_post' comentario.post.id %}" 
+                                       class="text-decoration-none" target="_blank">
+                                        {{ comentario.post.titulo }}
+                                    </a>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Contenido:</small>
+                                    <div class="bg-white p-3 rounded border">
+                                        {{ comentario.contenido|linebreaks }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulario de moderación -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">
+                                <i class="bi bi-sliders me-2"></i>
+                                Acción de moderación
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.estado.id_for_label }}" class="form-label">
+                                    Estado:
+                                </label>
+                                {{ form.estado }}
+                                {% if form.estado.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.estado.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.motivo_rechazo.id_for_label }}" class="form-label">
+                                    Motivo de rechazo (opcional):
+                                </label>
+                                {{ form.motivo_rechazo }}
+                                {% if form.motivo_rechazo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.motivo_rechazo.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Solo necesario si rechazas el comentario. Sé constructivo.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'comments:comentarios_pendientes' %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Volver a Pendientes
+                            </a>
+                            
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'posts:detalle_post' comentario.post.id %}" 
+                                   class="btn btn-outline-info">
+                                    <i class="bi bi-eye me-2"></i>
+                                    Ver Publicación
+                                </a>
+                                
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-save me-2"></i>
+                                    Guardar Moderación
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

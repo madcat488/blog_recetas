@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load posts_extras %}
+{% load user_tags %}
+
+{% block titulo %}Viajes - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-2">
+                <i class="bi bi-compass me-2"></i>Todos los Viajes
+            </h1>
+            <p class="text-muted mb-0">
+                Descubre experiencias de viaje compartidas por nuestra comunidad
+            </p>
+        </div>
+        
+        <!-- Filtros rápidos -->
+        <div class="d-flex gap-2">
+            {% if user.is_authenticated and user|puede_crear_post %}
+            <a href="{% url 'posts:agregar_post' %}" class="btn btn-warning btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Nuevo Viaje
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Filtros y búsqueda -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <!-- Categorías -->
+                    {% if categorias %}
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="text-muted small me-2">Categorías:</span>
+                        <a href="{% url 'posts:listar_posts' %}" 
+                            class="badge {% if not request.GET.categoria %}bg-warning{% else %}bg-secondary{% endif %} text-decoration-none">
+                            Todas
+                        </a>
+                        {% for cat in categorias|slice:":5" %}
+                        <a href="?categoria={{ cat.nombre }}" 
+                            class="badge {% if request.GET.categoria == cat.nombre %}bg-warning{% else %}bg-light text-dark{% endif %} text-decoration-none">
+                            {{ cat.nombre }}
+                        </a>
+                        {% endfor %}
+                        
+                        {% if categorias|length > 5 %}
+                        <div class="dropdown">
+                            <button class="badge bg-light text-dark border-0 dropdown-toggle" 
+                                    type="button" data-bs-toggle="dropdown">
+                                Más...
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% for cat in categorias|slice:"5:" %}
+                                <li>
+                                    <a class="dropdown-item" href="?categoria={{ cat.nombre }}">
+                                        {{ cat.nombre }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6">
+                    <!-- Barra de búsqueda -->
+                    <form method="GET" class="d-flex">
+                        <div class="input-group">
+                            <input type="text" 
+                                    class="form-control form-control-sm" 
+                                    placeholder="Buscar viajes..." 
+                                    name="buscador"
+                                    value="{{ request.GET.buscador|default:'' }}">
+                            <button class="btn btn-outline-warning btn-sm" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            {% if request.GET.buscador %}
+                            <a href="{% url 'posts:listar_posts' %}" 
+                                class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-primary mb-1">{{ total_posts }}</h3>
+                    <p class="text-muted small mb-0">Viajes totales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-success mb-1">{{ posts|length }}</h3>
+                    <p class="text-muted small mb-0">Mostrando</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-warning mb-1">{{ categorias.count }}</h3>
+                    <p class="text-muted small mb-0">Categorías</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-info mb-1">{{ colaboradores_count }}</h3>
+                    <p class="text-muted small mb-0">Colaboradores</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de posts -->
+    <div class="row">
+        {% if posts %}
+            {% for post in posts %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <!-- ENLACE A DETALLES DESDE LA IMAGEN -->
+                    <a href="{% url 'posts:detalle_post' post.id %}" class="text-decoration-none">
+                        {% if post.imagen %}
+                        <img src="{{ post.imagen.url }}" 
+                            class="card-img-top" 
+                            alt="{{ post.titulo }}"
+                            style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center"
+                            style="height: 200px;">
+                            <i class="bi bi-camera text-white" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <!-- Estado y visibilidad -->
+                        <div class="mb-2">
+                            {% if post.estado == 'publicado' %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>Publicado
+                            </span>
+                            {% elif post.estado == 'borrador' %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-eye-slash me-1"></i>Borrador
+                            </span>
+                            {% elif post.estado == 'revision' %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-clock me-1"></i>En revisión
+                            </span>
+                            {% endif %}
+                            
+                            {% if post.visibilidad == 'privado' %}
+                            <span class="badge bg-dark ms-1">
+                                <i class="bi bi-lock me-1"></i>Privado
+                            </span>
+                            {% elif post.visibilidad == 'solo_colaboradores' %}
+                            <span class="badge bg-warning text-dark ms-1">
+                                <i class="bi bi-people me-1"></i>Solo colaboradores
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Título con ENLACE A DETALLES -->
+                        <h5 class="card-title fw-bold mb-2">
+                            <a href="{% url 'posts:detalle_post' post.id %}" 
+                                class="text-decoration-none text-dark hover-text-warning">
+                                {{ post.titulo|truncatechars:60 }}
+                            </a>
+                        </h5>
+                        
+                        <!-- Descripción corta -->
+                        <p class="card-text text-muted small flex-grow-1">
+                            {{ post.resumen|default:post.contenido|striptags|truncatechars:120 }}
+                        </p>
+                        
+                        <!-- Información del viaje -->
+                        <div class="mb-3">
+                            {% if post.ubicacion_pais %}
+                            <div class="d-flex align-items-center text-muted small mb-1">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                <span>{{ post.ubicacion_pais }}{% if post.ubicacion_ciudad %}, {{ post.ubicacion_ciudad }}{% endif %}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if post.precio_aproximado %}
+                            <div class="d-flex align-items-center text-muted small mb-1">
+                                <i class="bi bi-cash-coin me-1"></i>
+                                <span>{{ post.precio_aproximado }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Autor, fecha y acciones -->
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <div class="d-flex align-items-center">
+                                <!-- Avatar del autor -->
+                                {% if post.autor.perfil and post.autor.perfil.imagen %}
+                                <img src="{{ post.autor.perfil.imagen.url }}" 
+                                    alt="{{ post.autor.username }}"
+                                    class="rounded-circle me-2"
+                                    width="30" height="30"
+                                    style="object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-2"
+                                    style="width: 30px; height: 30px;">
+                                    <i class="bi bi-person text-white small"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <small class="d-block text-muted">{{ post.autor.username }}</small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        {{ post.fecha_creacion|date:"d/m/Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- BOTÓN VER DETALLES -->
+                            <a href="{% url 'posts:detalle_post' post.id %}" 
+                                class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-eye me-1"></i>Ver
+                            </a>
+                            <a href="?refresh=true" class="btn btn-sm btn-outline-warning" 
+                                title="Actualizar datos">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <!-- Mensaje cuando no hay posts -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-compass display-1 text-muted mb-3"></i>
+                    <h5 class="text-muted mb-3">No se encontraron viajes</h5>
+                    <p class="text-muted mb-4">
+                        {% if request.GET.categoria %}
+                        No hay publicaciones en la categoría "{{ request.GET.categoria }}".
+                        {% elif request.GET.buscador %}
+                        No se encontraron resultados para "{{ request.GET.buscador }}".
+                        {% else %}
+                        Aún no hay viajes publicados.
+                        {% endif %}
+                    </p>
+                    
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="{% url 'posts:listar_posts' %}" class="btn btn-warning">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Ver todos
+                        </a>
+                        
+                        {% if user.is_authenticated and user|puede_crear_post %}
+                        <a href="{% url 'posts:agregar_post' %}" class="btn btn-outline-warning">
+                            <i class="bi bi-plus-circle me-2"></i>Crear el primero
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.previous_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.buscador %}&buscador={{ request.GET.buscador }}{% endif %}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+            </li>
+            {% endif %}
+            
+            {% for i in paginator.page_range %}
+            <li class="page-item {% if page_obj.number == i %}active{% endif %}">
+                <a class="page-link" 
+                   href="?page={{ i }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.buscador %}&buscador={{ request.GET.buscador }}{% endif %}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}">
+                    {{ i }}
+                </a>
+            </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.next_page_number }}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.buscador %}&buscador={{ request.GET.buscador }}{% endif %}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+    .hover-lift {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    .hover-text-warning:hover {
+        color: #ffc107 !important;
+    }
+    
+    .card-img-top {
+        border-radius: 12px 12px 0 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .card-img-top:hover {
+        opacity: 0.9;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .btn-outline-warning {
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Efecto hover en las tarjetas
+    const cards = document.querySelectorAll('.hover-lift');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '1';
+        });
+    });
+    
+    // Quick view modal (opcional para el futuro)
+    // Podrías añadir una vista rápida al hacer clic en "Ver"
+});
+</script>
+{% endblock %}
+
+

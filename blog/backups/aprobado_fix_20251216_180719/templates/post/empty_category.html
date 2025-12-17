@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Categoría Vacía - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <!-- Icono -->
+            <div class="mb-4">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+            </div>
+            
+            <!-- Mensaje principal -->
+            <h2 class="fw-bold mb-3">Categoría: <span class="text-warning">{{ categoria.nombre }}</span></h2>
+            <p class="lead text-muted mb-4">
+                Por el momento no hay publicaciones en esta categoría.
+            </p>
+            
+            <!-- Estadísticas de la categoría -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="bi bi-folder text-warning fs-3 me-3"></i>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">{{ total_categorias }}</h5>
+                                    <small class="text-muted">Categorías totales</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="bi bi-file-post text-warning fs-3 me-3"></i>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">{{ total_posts }}</h5>
+                                    <small class="text-muted">Publicaciones totales</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Categorías disponibles -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-tags me-2"></i>Otras Categorías Disponibles
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if otras_categorias %}
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        {% for cat in otras_categorias %}
+                        <a href="{% url 'posts:listar_por_categoria' cat.nombre %}" 
+                           class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-tag me-1"></i>{{ cat.nombre }}
+                            <span class="badge bg-warning text-dark ms-1">{{ cat.post_count }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No hay otras categorías disponibles.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="d-flex flex-wrap gap-3 justify-content-center mt-4">
+                <a href="{% url 'index' %}" class="btn btn-warning">
+                    <i class="bi bi-house-door me-2"></i>Volver al Inicio
+                </a>
+                <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-warning">
+                    <i class="bi bi-grid-3x3-gap me-2"></i>Ver Todos los Viajes
+                </a>
+                
+                <!-- Si el usuario es colaborador/staff, puede agregar un post -->
+                {% if user.is_authenticated and user|puede_crear_post %}
+                <a href="{% url 'posts:agregar_post' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Publicación en {{ categoria.nombre }}
+                </a>
+                {% endif %}
+            </div>
+            
+            <!-- Sugerencias -->
+            <div class="mt-5 pt-4 border-top">
+                <h6 class="fw-bold mb-3">¿Qué puedes hacer?</h6>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-search text-warning fs-3 mb-3"></i>
+                                <h6 class="fw-bold">Explora otras categorías</h6>
+                                <p class="small text-muted mb-0">
+                                    Descubre publicaciones en otras categorías
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-bell text-warning fs-3 mb-3"></i>
+                                <h6 class="fw-bold">Activa notificaciones</h6>
+                                <p class="small text-muted mb-0">
+                                    Te avisaremos cuando haya nuevos posts aquí
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-chat-dots text-warning fs-3 mb-3"></i>
+                                <h6 class="fw-bold">Sugiere contenido</h6>
+                                <p class="small text-muted mb-0">
+                                    ¿Qué te gustaría ver en esta categoría?
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    
+    .btn-outline-warning:hover {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+</style>
+{% endblock %}
+

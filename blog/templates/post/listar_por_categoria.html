@@ -1,0 +1,146 @@
+<!-- templates/post/listar_por_categoria.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load posts_extras %}
+{% load user_tags %}
+
+{% block contenido %}
+<div class="container py-4">
+    <!-- ... header, filtros, etc ... -->
+    
+    <div class="row">
+        {% if posts %}
+            {% for post in posts %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-0 hover-card">
+                    <!-- ENLACE A DETALLES CON VERIFICACIÓN -->
+                    {% if post.id %}
+                    <a href="{% url 'posts:detalle_post' post.id %}" class="text-decoration-none">
+                    {% else %}
+                    <a href="#" class="text-decoration-none" style="pointer-events: none;">
+                    {% endif %}
+                        {% if post.imagen %}
+                        <img src="{{ post.imagen.url }}" 
+                             class="card-img-top" 
+                             alt="{{ post.titulo }}"
+                             style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center"
+                             style="height: 200px;">
+                            <i class="bi bi-camera text-white" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <!-- Estado y categoría -->
+                        <div class="mb-2">
+                            <span class="badge bg-warning">
+                                <i class="bi bi-tag me-1"></i>{{ post.categoria.nombre }}
+                            </span>
+                            {% if post.estado == 'borrador' %}
+                            <span class="badge bg-secondary ms-1">
+                                <i class="bi bi-eye-slash me-1"></i>Borrador
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Título con ENLACE A DETALLES CON VERIFICACIÓN -->
+                        <h5 class="card-title fw-bold mb-2">
+                            {% if post.id %}
+                            <a href="{% url 'posts:detalle_post' post.id %}" 
+                               class="text-decoration-none text-dark hover-text-warning">
+                                {{ post.titulo|truncatechars:60 }}
+                            </a>
+                            {% else %}
+                            <span class="text-dark">
+                                {{ post.titulo|truncatechars:60 }}
+                            </span>
+                            {% endif %}
+                        </h5>
+                        
+                        <!-- ... resto del contenido del post ... -->
+                        
+                        <!-- BOTÓN VER DETALLES CON VERIFICACIÓN -->
+                        <div class="btn-group" role="group">
+                            {% if post.id %}
+                            <a href="{% url 'posts:detalle_post' post.id %}" 
+                                class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-eye me-1"></i>Ver
+                            </a>
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-secondary" disabled>
+                                <i class="bi bi-eye me-1"></i>Ver
+                            </button>
+                            {% endif %}
+                            
+                            <!-- ... otros botones ... -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <!-- Si no hay posts -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                    <h2 class="fw-bold mb-3">Categoría: <span class="text-warning">{{ categoria.nombre }}</span></h2>
+                    <p class="lead text-muted mb-4">
+                        Por el momento no hay publicaciones en esta categoría.
+                    </p>
+                    <!-- ... botones de acción ... -->
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}{% if request.GET.buscador %}&buscador={{ request.GET.buscador }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for i in paginator.page_range %}
+            <li class="page-item {% if page_obj.number == i %}active{% endif %}">
+                <a class="page-link" href="?page={{ i }}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}{% if request.GET.buscador %}&buscador={{ request.GET.buscador }}{% endif %}">
+                    {{ i }}
+                </a>
+            </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}{% if request.GET.buscador %}&buscador={{ request.GET.buscador }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Mini sección de comentarios - AQUÍ ESTABA EL ERROR -->
+{% if posts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verifica que todos los enlaces de comentarios tengan ID válido
+    document.querySelectorAll('a[href*="#form-comentario"]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href.includes("('',)")) {
+            link.style.display = 'none'; // Oculta enlaces inválidos
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

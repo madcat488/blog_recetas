@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Cerrar Sesión - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Tarjeta de confirmación -->
+            <div class="card border-0 shadow-lg">
+                <!-- Encabezado -->
+                <div class="card-header bg-warning text-white text-center py-4">
+                    <i class="bi bi-box-arrow-right display-4 mb-3"></i>
+                    <h2 class="fw-bold mb-0">¿Seguro que quieres salir?</h2>
+                </div>
+                
+                <!-- Cuerpo -->
+                <div class="card-body p-5">
+                    <!-- Mensaje de confirmación -->
+                    <div class="text-center mb-4">
+                        <div class="mb-4">
+                            <i class="bi bi-door-open text-warning" style="font-size: 4rem;"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Hasta pronto, {{ user.username }}!</h4>
+                        <p class="text-muted mb-0">
+                            Al cerrar sesión, deberás volver a iniciar sesión para acceder 
+                            a tu perfil y contenido personalizado.
+                        </p>
+                    </div>
+                    
+                    <!-- Estadísticas rápidas -->
+                    {% if user.is_authenticated %}
+                    <div class="alert alert-info border-0 mb-4">
+                        <div class="row text-center">
+                            <div class="col-6 border-end">
+                                <h5 class="fw-bold text-primary">{{ user.post_set.count|default:0 }}</h5>
+                                <small class="text-muted">Viajes publicados</small>
+                            </div>
+                            <div class="col-6">
+                                <h5 class="fw-bold text-success">0</h5>
+                                <small class="text-muted">Comentarios realizados</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Opciones -->
+                    <div class="row g-3 mt-4">
+                        <!-- Botón Cancelar -->
+                        <div class="col-md-6">
+                            <a href="{% url 'posts:listar_posts' %}" 
+                               class="btn btn-outline-secondary w-100 py-3 d-flex align-items-center justify-content-center">
+                                <i class="bi bi-arrow-left-circle me-2"></i>
+                                <span class="fw-bold">Cancelar</span>
+                            </a>
+                        </div>
+                        
+                        <!-- Botón Confirmar -->
+                        <div class="col-md-6">
+                            <form method="POST" action="{% url 'usuarios:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn btn-warning w-100 py-3 d-flex align-items-center justify-content-center fw-bold">
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    Sí, cerrar sesión
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Información adicional -->
+                    <div class="mt-5 pt-4 border-top text-center">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Podrás volver a iniciar sesión en cualquier momento
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Pie de tarjeta -->
+                <div class="card-footer bg-light border-0 py-3 text-center">
+                    <small class="text-muted">
+                        ¿Necesitas ayuda? 
+                        <a href="#" class="text-warning text-decoration-none">Contacta con soporte</a>
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Información adicional -->
+            <div class="text-center mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-10">
+                        <div class="alert alert-light border" role="alert">
+                            <h6 class="alert-heading mb-3">
+                                <i class="bi bi-lightbulb text-warning me-2"></i>
+                                ¿Sabías que...?
+                            </h6>
+                            <ul class="list-unstyled mb-0 text-start">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Tus publicaciones se mantendrán visibles
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Podrás recuperar tu sesión en cualquier dispositivo
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Tu perfil estará listo para cuando vuelvas
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos personalizados -->
+<style>
+    .card {
+        border-radius: 20px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card-header {
+        border-radius: 20px 20px 0 0 !important;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+    }
+    
+    .btn-outline-secondary:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Animación para el icono */
+    @keyframes doorSwing {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(15deg); }
+        75% { transform: rotate(-15deg); }
+    }
+    
+    .bi-door-open {
+        animation: doorSwing 2s ease-in-out infinite;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 2rem !important;
+        }
+        
+        .btn {
+            padding: 0.75rem !important;
+        }
+    }
+</style>
+
+<!-- Script para animaciones -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Efecto hover en botones
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transition = 'all 0.3s ease';
+        });
+    });
+    
+    // Confirmación adicional (opcional)
+    const logoutForm = document.querySelector('form');
+    if (logoutForm) {
+        logoutForm.addEventListener('submit', function(e) {
+            // Opcional: puedes agregar confirmación adicional aquí
+            // if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            //     e.preventDefault();
+            // }
+            
+            // Mostrar mensaje de despedida
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Cerrando sesión...';
+            submitBtn.disabled = true;
+            
+            // Restaurar después de 3 segundos (en caso de que falle)
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 3000);
+        });
+    }
+    
+    // Efecto de carga para la página
+    const card = document.querySelector('.card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+<title>Eliminar</title>
+{% endblock %}
+
+{% block navegacion %}
+{% include 'navegacion.html' %}
+{% endblock %}
+
+{% block contenido %}
+
+<h1>Eliminar</h1>
+
+<p>Seguro que desea eliminar?</p>
+
+<form action="" method="POST">
+{% csrf_token %}
+<input type="submit" class="btn btn-primary" value="Si, eliminar." />
+</form>
+<a href="{% url 'apps.posts:listar_posts' %}" class="btn btn-primary" style="font-size: small;">No, volver.</a>
+{% endblock %}

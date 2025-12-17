@@ -1,0 +1,49 @@
+{% if is_stale and post %}
+<div class="position-absolute top-0 start-0 m-2" style="z-index: 1;">
+    <span class="badge bg-warning text-dark" 
+          title="Este post puede estar desactualizado. Haz clic para refrescar."
+          data-bs-toggle="tooltip"
+          onclick="refreshPost({{ post_id }})"
+          style="cursor: pointer;">
+        <i class="bi bi-arrow-clockwise me-1"></i>
+        <small>Actualizar</small>
+    </span>
+</div>
+{% endif %}
+
+<script>
+function refreshPost(postId) {
+    // Enviar solicitud para refrescar el post
+    fetch(`/api/posts/${postId}/refresh/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Recargar la página o actualizar contenido dinámicamente
+            location.reload();
+        }
+    });
+}
+
+function getCsrfToken() {
+    // Obtener token CSRF de las cookies
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>

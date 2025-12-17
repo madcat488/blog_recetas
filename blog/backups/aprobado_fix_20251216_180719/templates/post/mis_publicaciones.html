@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load user_tags %}
+
+{% block titulo %}Mis Publicaciones - Blog de Viajes{% endblock %}
+
+{% block contenido %}
+<div class="container py-4">
+    <!-- Verificación de permisos -->
+    {% if not user.is_authenticated or not user|puede_crear_post %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-shield-lock display-1 text-warning mb-4"></i>
+                    <h3 class="fw-bold mb-3">Acceso Restringido</h3>
+                    <p class="text-muted mb-4">
+                        No tienes permisos para acceder a esta sección.
+                        Solo los colaboradores pueden crear y gestionar publicaciones.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <a href="{% url 'posts:listar_posts' %}" class="btn btn-primary">
+                            <i class="bi bi-compass me-2"></i>Explorar Viajes
+                        </a>
+                        <a href="{% url 'usuarios:perfil' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-circle me-2"></i>Mi Perfil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- ========== CONTENIDO PARA COLABORADORES ========== -->
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold mb-2">
+                <i class="bi bi-journal-text me-2"></i>Mis Publicaciones
+            </h1>
+            <p class="text-muted mb-0">
+                Gestiona todos los viajes que has compartido con la comunidad
+            </p>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <a href="{% url 'posts:agregar_post' %}" class="btn btn-warning">
+                <i class="bi bi-plus-circle me-1"></i>Nueva Publicación
+            </a>
+            <a href="{% url 'posts:listar_posts' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-eye me-1"></i>Ver Todos
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros y estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body py-3">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <span class="fw-bold">Filtrar por:</span>
+                        <a href="?estado=publicado" class="badge bg-success text-decoration-none">Publicados</a>
+                        <a href="?estado=borrador" class="badge bg-secondary text-decoration-none">Borradores</a>
+                        <a href="?estado=revision" class="badge bg-info text-decoration-none">En revisión</a>
+                        <a href="?" class="badge bg-warning text-decoration-none">Todos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body py-3 text-center">
+                    <div class="row">
+                        <div class="col-4">
+                            <h5 class="text-primary mb-1">{{ total_publicaciones }}</h5>
+                            <small class="text-muted">Total</small>
+                        </div>
+                        <div class="col-4 border-start border-end">
+                            <h5 class="text-success mb-1">{{ publicados_count }}</h5>
+                            <small class="text-muted">Publicados</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="text-secondary mb-1">{{ borradores_count }}</h5>
+                            <small class="text-muted">Borradores</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de publicaciones -->
+    {% if publicaciones %}
+    <div class="row">
+        {% for post in publicaciones %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-0 hover-lift">
+                <!-- Estado de la publicación -->
+                <div class="card-header bg-white border-0 pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        {% if post.estado == 'publicado' %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Publicado
+                        </span>
+                        {% elif post.estado == 'borrador' %}
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-pencil me-1"></i>Borrador
+                        </span>
+                        {% elif post.estado == 'revision' %}
+                        <span class="badge bg-info">
+                            <i class="bi bi-clock me-1"></i>En revisión
+                        </span>
+                        {% endif %}
+                        
+                        <!-- Visibilidad -->
+                        {% if post.visibilidad == 'privado' %}
+                        <span class="badge bg-dark">
+                            <i class="bi bi-lock me-1"></i>Privado
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Imagen -->
+                <a href="{% url 'posts:detalle_post' post.id %}">
+                    {% if post.imagen %}
+                    <img src="{{ post.imagen.url }}" 
+                         class="card-img-top" 
+                         alt="{{ post.titulo }}"
+                         style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center"
+                         style="height: 200px;">
+                        <i class="bi bi-camera text-white" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                </a>
+                
+                <div class="card-body d-flex flex-column">
+                    <!-- Título -->
+                    <h5 class="card-title fw-bold mb-2">
+                        <a href="{% url 'posts:detalle_post' post.id %}" 
+                           class="text-decoration-none text-dark">
+                            {{ post.titulo|truncatechars:50 }}
+                        </a>
+                    </h5>
+                    
+                    <!-- Descripción corta -->
+                    <p class="card-text text-muted small flex-grow-1">
+                        {{ post.resumen|default:post.contenido|striptags|truncatechars:100 }}
+                    </p>
+                    
+                    <!-- Fecha y estadísticas -->
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar me-1"></i>
+                            {{ post.fecha_creacion|date:"d/m/Y" }}
+                        </small>
+                        <small class="text-muted ms-3">
+                            <i class="bi bi-eye me-1"></i>
+                            {{ post.vistas|default:0 }} vistas
+                        </small>
+                        <small class="text-muted ms-3">
+                            <i class="bi bi-chat me-1"></i>
+                            {{ post.comentarios.count|default:0 }}
+                        </small>
+                    </div>
+                    
+                    <!-- Acciones -->
+                    <div class="d-flex gap-2 mt-auto">
+                        <a href="{% url 'posts:detalle_post' post.id %}" 
+                           class="btn btn-sm btn-outline-primary flex-grow-1">
+                            <i class="bi bi-eye me-1"></i>Ver
+                        </a>
+                        <a href="{% url 'posts:actualizar_post' post.id %}" 
+                           class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </a>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-danger" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalEliminar{{ post.id }}">
+                            <i class="bi bi-trash me-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal de confirmación para eliminar -->
+            <div class="modal fade" id="modalEliminar{{ post.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar eliminación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>¿Estás seguro de eliminar <strong>"{{ post.titulo }}"</strong>?</p>
+                            <p class="text-muted small">Esta acción no se puede deshacer. También se eliminarán todos los comentarios asociados.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form action="{% url 'posts:eliminar_post' post.id %}" method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                    Siguiente <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <!-- Sin publicaciones -->
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-journal-plus display-1 text-muted"></i>
+        </div>
+        <h3 class="mb-3">Aún no has creado publicaciones</h3>
+        <p class="text-muted mb-4">Comparte tu primera experiencia de viaje con la comunidad</p>
+        <a href="{% url 'posts:agregar_post' %}" class="btn btn-warning btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Crear Primera Publicación
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Información para colaboradores -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-info-circle me-2"></i>Información para Colaboradores
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <strong>Publicado:</strong> Visible para todos los usuarios
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-pencil text-secondary me-2"></i>
+                            <strong>Borrador:</strong> Solo visible para ti
+                        </li>
+                        <li>
+                            <i class="bi bi-clock text-info me-2"></i>
+                            <strong>En revisión:</strong> En proceso de aprobación
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-globe text-primary me-2"></i>
+                            <strong>Público:</strong> Cualquier usuario puede ver
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-people text-warning me-2"></i>
+                            <strong>Solo colaboradores:</strong> Solo otros colaboradores
+                        </li>
+                        <li>
+                            <i class="bi bi-lock text-dark me-2"></i>
+                            <strong>Privado:</strong> Solo tú puedes ver
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% endif %}  <!-- CIERRE DEL BLOQUE ELSE (para colaboradores) -->
+</div>
+
+<style>
+    .hover-lift {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    .card-img-top {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación para eliminar (backup)
+    const deleteButtons = document.querySelectorAll('.btn-outline-danger[data-bs-toggle="modal"]');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const postId = this.dataset.bsTarget.replace('#modalEliminar', '');
+            console.log('Eliminar post:', postId);
+        });
+    });
+    
+    // Actualizar estadísticas cuando cambie filtro
+    const filterLinks = document.querySelectorAll('.badge.text-decoration-none');
+    filterLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Opcional: Mostrar loading
+            const container = document.querySelector('.row');
+            if (container) {
+                container.style.opacity = '0.5';
+                container.style.transition = 'opacity 0.3s ease';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
